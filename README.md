@@ -1,50 +1,89 @@
-# Welcome to your Expo app 👋
+# React Native Login & Register Interface
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+This project is a simple **mobile authentication UI** built with **React Native** and **Expo Router**.  
+It contains two screens:
 
-## Get started
+- **Login Screen**: Username & Password fields, with a login button and a link to Register.
+- **Register Screen**: Username, Password, Email, and Mobile fields with a button to create an account and a link back to Login.
 
-1. Install dependencies
+---
 
-   ```bash
-   npm install
-   ```
+## 📸 Screenshots
 
-2. Start the app
+### Figma Design
+<img width="1919" height="1015" alt="image" src="https://github.com/user-attachments/assets/c73c8c6e-2762-41d0-9878-8e3d0dae30c3" />
 
-   ```bash
-   npx expo start
-   ```
 
-In the output, you'll find options to open the app in a
+### Login Page
+<img width="1919" height="1021" alt="image" src="https://github.com/user-attachments/assets/ddec3441-4282-4c32-bcc3-2d6286980830" />
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+### Register Page
+<img width="1919" height="1021" alt="image" src="https://github.com/user-attachments/assets/5189d6c2-e606-4cc2-9fa0-dc963384f855" />
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+---
 
-## Get a fresh project
+## 🚀 Features
+- Clean and minimal UI
+- Built with **React Native**
+- Navigation with **Expo Router**
+- Custom input fields and buttons
+- Responsive design for mobile
 
-When you're ready, run:
+---
 
-```bash
-npm run reset-project
+## 📂 Project Structure
+
+```
+react-login/
+│── frontend/
+│   ├── app/
+│   │   ├── index.jsx       # Login Screen
+│   │   ├── register.jsx    # Register Screen
+│   │   ├── _layout.jsx     # Layout with routing
+│   ├── assets/             # Images (logo etc.)
+│── package.json
+│── README.md
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+---
 
-## Learn more
+## ⚙️ Installation & Running
 
-To learn more about developing your project with Expo, look at the following resources:
+1. Clone the repository:
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```bash
+git clone https://github.com/your-username/react-login.git
+cd react-login/frontend
+```
 
-## Join the community
+2. Install dependencies:
 
-Join our community of developers creating universal apps.
+```bash
+npm install
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+3. Run the app:
+
+```bash
+npx expo start
+```
+
+---
+
+## 🛠️ Tech Stack
+- [React Native](https://reactnative.dev/)
+- [Expo](https://expo.dev/)
+- [Expo Router](https://expo.github.io/router/docs)
+
+---
+
+## 📌 Future Improvements
+- Add form validation
+- Integrate backend authentication (Node.js / Firebase)
+- Add password visibility toggle
+- Improve UI with animations
+
+---
+
+## 📄 License
+This project is licensed under the MIT License.
