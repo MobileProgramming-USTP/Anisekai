@@ -5,7 +5,7 @@ export default function Index() {
   return (
     <View style={styles.container}>
       <Image
-        source={require("../assets/images/app-logo.png")}
+        source={require("../assets/images/mirage-logo.png")}
         style={styles.logo}
       />
 
@@ -16,7 +16,7 @@ export default function Index() {
       <TextInput style={styles.input} placeholder="Password" secureTextEntry />
 
       <TouchableOpacity style={styles.button}>
-        <Text style={styles.buttonText}>Login</Text>
+        <Text style={styles.buttonText}>LOGIN</Text>
       </TouchableOpacity>
 
       <Text style={styles.footer}>
@@ -53,7 +53,7 @@ const styles = StyleSheet.create({
   input: {
     borderWidth: 1,
     borderColor: "#fcbf49",
-    borderRadius: 10,
+    borderRadius: 30,
     padding: 10,
     marginVertical: 18,
     width: "100%",
