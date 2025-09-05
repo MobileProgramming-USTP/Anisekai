@@ -1,7 +1,7 @@
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from "react-native";
 import { Link } from "expo-router";
 
-export default function Index() {
+const Index = () => {
   return (
     <View style={styles.container}>
       <Image
@@ -34,7 +34,7 @@ const styles = StyleSheet.create({
     flex: 1, 
     justifyContent: "center", 
     alignItems: "center", 
-    padding: 40, 
+    padding: 50, 
     backgroundColor: "#fff" 
   },
 
@@ -51,13 +51,13 @@ const styles = StyleSheet.create({
   },
 
   input: {
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: "#fcbf49",
     borderRadius: 30,
-    padding: 10,
-    marginVertical: 18,
+    padding: 15,
+    marginVertical: 20,
     width: "100%",
-    paddingLeft: 20
+    paddingLeft: 25
   },
 
   button: { 
@@ -83,3 +83,5 @@ const styles = StyleSheet.create({
     fontWeight: "bold" 
   },
 });
+
+export default Index
