@@ -1,5 +1,6 @@
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from "react-native";
 import { Link } from "expo-router";
+import { FontAwesome } from "@expo/vector-icons";
 
 const Index = () => {
   return (
@@ -11,9 +12,15 @@ const Index = () => {
 
       <Text style={styles.title}>Login</Text>
 
-      <TextInput style={styles.input} placeholder="Username" />
+      <View style={styles.inputContainer}>
+        <FontAwesome name="user" style={styles.icon} />
+        <TextInput style={styles.input} placeholder="Username" />
+      </View>
 
-      <TextInput style={styles.input} placeholder="Password" secureTextEntry />
+      <View style={styles.inputContainer}>
+        <FontAwesome name="lock" style={styles.icon} />
+        <TextInput style={styles.input} placeholder="Password" secureTextEntry />
+      </View>
 
       <TouchableOpacity style={styles.button}>
         <Text style={styles.buttonText}>LOGIN</Text>
@@ -27,7 +34,7 @@ const Index = () => {
       </Text>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: { 
@@ -37,29 +44,36 @@ const styles = StyleSheet.create({
     padding: 50, 
     backgroundColor: "#fff" 
   },
-
   logo: { 
     width: 150, 
     height: 150, 
     marginBottom: 20 
   },
-
   title: {
     fontSize: 40, 
     fontWeight: "bold", 
     marginBottom: 20 
   },
-
-  input: {
+  inputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
     borderWidth: 2,
     borderColor: "#fcbf49",
     borderRadius: 30,
-    padding: 15,
-    marginVertical: 20,
+    marginVertical: 12,
     width: "100%",
-    paddingLeft: 25
+    paddingHorizontal: 15,
   },
-
+  icon: {
+    fontSize: 20,
+    color: "#fcbf49",
+    marginRight: 5,
+    marginLeft: 5,
+  },
+  input: {
+    flex: 1,
+    padding: 12,
+  },
   button: { 
     backgroundColor: "#fcbf49", 
     padding: 14, 
@@ -68,20 +82,17 @@ const styles = StyleSheet.create({
     width: "100%", 
     marginVertical: 20 
   },
-
   buttonText: { 
     fontWeight: "bold", 
     color: "#000" 
   },
-
   footer: { 
     fontSize: 14 
   },
-
   link: { 
     color: "#fcbf49", 
     fontWeight: "bold" 
   },
 });
 
-export default Index
+export default Index;
