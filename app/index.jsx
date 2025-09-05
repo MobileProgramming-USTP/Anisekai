@@ -1,8 +1,21 @@
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from "react-native";
+import { View, Text, TextInput, StyleSheet, Image, Pressable } from "react-native";
 import { Link } from "expo-router";
 import { FontAwesome } from "@expo/vector-icons";
+import React, { useState } from "react";
 
 const Index = () => {
+  // ✅ Hooks should be at the top of the component
+  const [isRemembered, setIsRemembered] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  const toggleRememberMe = () => {
+    setIsRemembered(!isRemembered);
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
   return (
     <View style={styles.container}>
       <Image
@@ -19,12 +32,37 @@ const Index = () => {
 
       <View style={styles.inputContainer}>
         <FontAwesome name="lock" style={styles.icon} />
-        <TextInput style={styles.input} placeholder="Password" secureTextEntry />
+        <TextInput
+          style={styles.input}
+          placeholder="Password"
+          secureTextEntry={!showPassword} 
+        />
+        <FontAwesome
+          name={showPassword ? "eye-slash" : "eye"}
+          style={styles.icon}
+          onPress={togglePasswordVisibility}
+        />
       </View>
 
-      <TouchableOpacity style={styles.button}>
+      <View style={styles.reminderContainer}>
+        <Pressable style={styles.rememberContainer} onPress={toggleRememberMe}>
+          <FontAwesome
+            name={isRemembered ? "check-square" : "square-o"}
+            style={styles.icon}
+          />
+          <Text style={styles.reminderText}>Remember Me</Text>
+        </Pressable>
+
+        <Pressable>
+          <Text style={styles.reminderText}>
+            <Link href="/forgot-password">Forgot Password?</Link>
+          </Text>
+        </Pressable>
+      </View>
+
+      <Pressable style={styles.button}>
         <Text style={styles.buttonText}>LOGIN</Text>
-      </TouchableOpacity>
+      </Pressable>
 
       <Text style={styles.footer}>
         Don’t have an account?{" "}
@@ -63,12 +101,12 @@ const styles = StyleSheet.create({
     marginVertical: 12,
     width: "100%",
     paddingHorizontal: 15,
+    marginBottom: 20,
   },
   icon: {
     fontSize: 20,
     color: "#fcbf49",
-    marginRight: 5,
-    marginLeft: 5,
+    marginHorizontal: 5,
   },
   input: {
     flex: 1,
@@ -93,6 +131,22 @@ const styles = StyleSheet.create({
     color: "#fcbf49", 
     fontWeight: "bold" 
   },
+  reminderText: {
+    fontSize: 12,
+    color: "#555",
+    fontWeight: "bold"
+  },
+  reminderContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+    paddingHorizontal: 10,
+    marginBottom: 10,
+  },
+  rememberContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  }
 });
 
 export default Index;

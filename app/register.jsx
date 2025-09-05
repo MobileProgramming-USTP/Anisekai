@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
     borderRadius: 8, 
     alignItems: "center", 
     width: "100%", 
-    marginVertical: 12 
+    marginVertical: 12
   },
   buttonText: { 
     fontWeight: "bold", 
