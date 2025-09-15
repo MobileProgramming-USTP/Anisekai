@@ -59,12 +59,10 @@ const Index = () => {
         </Link>
       </View>
 
-      {/* Login button */}
       <TouchableOpacity style={styles.button} onPress={handleLogin}>
         <Text style={styles.buttonText}>LOGIN</Text>
       </TouchableOpacity>
 
-      {/* Footer */}
       <Text style={styles.footer}>
         Don’t have an account?{" "}
         <Link href="/login/register" style={styles.link}>

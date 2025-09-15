@@ -41,7 +41,7 @@ export default function TabsLayout() {
                     <Ionicons name="settings-outline" color={color} size={size} />
                 ),                
              }} 
-            />  s    
+            /> 
         </Tabs>
     )
 }
