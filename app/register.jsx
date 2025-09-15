@@ -1,6 +1,6 @@
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from "react-native";
-import { Link } from "expo-router";
 import { FontAwesome } from "@expo/vector-icons";
+import { Link } from "expo-router";
+import { Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 const Register = () => {
   return (

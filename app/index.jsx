@@ -1,7 +1,7 @@
-import { View, Text, TextInput, StyleSheet, Image, Pressable } from "react-native";
-import { Link } from "expo-router";
 import { FontAwesome } from "@expo/vector-icons";
+import { Link } from "expo-router";
 import React, { useState } from "react";
+import { Image, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
 const Index = () => {
   // ✅ Hooks should be at the top of the component

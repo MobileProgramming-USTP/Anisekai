@@ -1,7 +1,7 @@
-import { View, Text, TextInput, StyleSheet, Pressable, Image } from "react-native";
-import { Link } from "expo-router";
 import { FontAwesome } from "@expo/vector-icons"; // 👈 import icons
-import React, { useState } from "react";
+import { Link } from "expo-router";
+import { useState } from "react";
+import { Image, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
@@ -42,7 +42,7 @@ const ForgotPassword = () => {
       <Text style={styles.footer}>
         Remember your password?{" "}
         <Link href="/" style={styles.link}>
-          Go Back to Login
+          Login
         </Link>
       </Text>
     </View>
