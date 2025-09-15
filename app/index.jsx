@@ -1,7 +1,7 @@
 import { FontAwesome } from "@expo/vector-icons";
 import { Link, useRouter } from "expo-router";
 import React, { useState } from "react";
-import { Image, Pressable, Text, TextInput, TouchableOpacity, View, StyleSheet, } from "react-native";
+import { Image, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, View, } from "react-native";
 
 const Index = () => {
   // ✅ Hooks at top
