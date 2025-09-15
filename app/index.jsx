@@ -55,18 +55,18 @@ const Index = () => {
 
         <Pressable>
           <Text style={styles.reminderText}>
-            <Link href="/forgot-password">Forgot Password?</Link>
+            <Link href="/login/forgot-password">Forgot Password?</Link>
           </Text>
         </Pressable>
       </View>
 
       <Pressable style={styles.button}>
-        <Text style={styles.buttonText}>LOGIN</Text>
+        <Text style={styles.buttonText} href="" >LOGIN</Text>
       </Pressable>
 
       <Text style={styles.footer}>
         Don’t have an account?{" "}
-        <Link href="/register" style={styles.link}>
+        <Link href="/login/register" style={styles.link}>
           Sign Up
         </Link>
       </Text>

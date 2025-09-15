@@ -14,7 +14,7 @@ const ForgotPassword = () => {
   return (
     <View style={styles.container}>
       <Image
-        source={require("../assets/images/mirage-logo.png")}
+        source={require("../../assets/images/mirage-logo.png")}
         style={styles.logo}
       />
 
