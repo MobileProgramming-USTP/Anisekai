@@ -1,19 +1,20 @@
 import { FontAwesome } from "@expo/vector-icons";
-import { Link } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import React, { useState } from "react";
-import { Image, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Image, Pressable, Text, TextInput, TouchableOpacity, View, StyleSheet, } from "react-native";
 
 const Index = () => {
-  // ✅ Hooks should be at the top of the component
+  // ✅ Hooks at top
   const [isRemembered, setIsRemembered] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  const toggleRememberMe = () => {
-    setIsRemembered(!isRemembered);
-  };
+  const router = useRouter();
 
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
+  const toggleRememberMe = () => setIsRemembered(!isRemembered);
+  const togglePasswordVisibility = () => setShowPassword(!showPassword);
+
+  const handleLogin = () => {
+    router.push("/(tabs)/dashboard");
   };
 
   return (
@@ -35,7 +36,7 @@ const Index = () => {
         <TextInput
           style={styles.input}
           placeholder="Password"
-          secureTextEntry={!showPassword} 
+          secureTextEntry={!showPassword}
         />
         <FontAwesome
           name={showPassword ? "eye-slash" : "eye"}
@@ -53,17 +54,17 @@ const Index = () => {
           <Text style={styles.reminderText}>Remember Me</Text>
         </Pressable>
 
-        <Pressable>
-          <Text style={styles.reminderText}>
-            <Link href="/login/forgot-password">Forgot Password?</Link>
-          </Text>
-        </Pressable>
+        <Link href="/login/forgot-password" style={styles.reminderText}>
+          Forgot Password?
+        </Link>
       </View>
 
-      <Pressable style={styles.button}>
-        <Text style={styles.buttonText} href="" >LOGIN</Text>
-      </Pressable>
+      {/* Login button */}
+      <TouchableOpacity style={styles.button} onPress={handleLogin}>
+        <Text style={styles.buttonText}>LOGIN</Text>
+      </TouchableOpacity>
 
+      {/* Footer */}
       <Text style={styles.footer}>
         Don’t have an account?{" "}
         <Link href="/login/register" style={styles.link}>
@@ -75,22 +76,22 @@ const Index = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    justifyContent: "center", 
-    alignItems: "center", 
-    padding: 50, 
-    backgroundColor: "#fff" 
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 50,
+    backgroundColor: "#fff",
   },
-  logo: { 
-    width: 150, 
-    height: 150, 
-    marginBottom: 20 
+  logo: {
+    width: 150,
+    height: 150,
+    marginBottom: 20,
   },
   title: {
-    fontSize: 40, 
-    fontWeight: "bold", 
-    marginBottom: 20 
+    fontSize: 40,
+    fontWeight: "bold",
+    marginBottom: 20,
   },
   inputContainer: {
     flexDirection: "row",
@@ -112,29 +113,29 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 12,
   },
-  button: { 
-    backgroundColor: "#fcbf49", 
-    padding: 14, 
-    borderRadius: 8, 
-    alignItems: "center", 
-    width: "100%", 
-    marginVertical: 20 
+  button: {
+    backgroundColor: "#fcbf49",
+    padding: 14,
+    borderRadius: 8,
+    alignItems: "center",
+    width: "100%",
+    marginVertical: 20,
   },
-  buttonText: { 
-    fontWeight: "bold", 
-    color: "#000" 
+  buttonText: {
+    fontWeight: "bold",
+    color: "#000",
   },
-  footer: { 
-    fontSize: 14 
+  footer: {
+    fontSize: 14,
   },
-  link: { 
-    color: "#fcbf49", 
-    fontWeight: "bold" 
+  link: {
+    color: "#fcbf49",
+    fontWeight: "bold",
   },
   reminderText: {
     fontSize: 12,
     color: "#555",
-    fontWeight: "bold"
+    fontWeight: "bold",
   },
   reminderContainer: {
     flexDirection: "row",
@@ -146,7 +147,7 @@ const styles = StyleSheet.create({
   rememberContainer: {
     flexDirection: "row",
     alignItems: "center",
-  }
+  },
 });
 
 export default Index;
