@@ -1,8 +1,9 @@
 import { FontAwesome } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { Link, useRouter } from "expo-router";
 import { useState } from "react";
 import {
-    Image,
+    ImageBackground,
     Pressable,
     StyleSheet,
     Text,
@@ -25,103 +26,114 @@ const Login = () => {
   };
 
   return (
-    <View style={styles.container}>
-      <Image
-        source={require("../../assets/images/mirage-logo.png")}
-        style={styles.logo}
-      />
+    <ImageBackground
+      source={require("../../assets/images/anime-collage.png")}
+      style={styles.background}
+      resizeMode="cover"
+    >
+      <LinearGradient
+        colors={["rgba(0,0,0,0.8)", "rgba(0,0,0,0.4)", "rgba(0,0,0,0.8)"]}
+        style={styles.overlay}
+      >
+        <View style={styles.container}>
+          <Text style={styles.title}>Login</Text>
 
-      <Text style={styles.title}>Login</Text>
+          <View style={styles.inputContainer}>
+            <FontAwesome name="user" style={styles.icon} />
+            <TextInput style={styles.input} placeholder="Username" placeholderTextColor="#ccc" />
+          </View>
 
-      <View style={styles.inputContainer}>
-        <FontAwesome name="user" style={styles.icon} />
-        <TextInput style={styles.input} placeholder="Username" />
-      </View>
+          <View style={styles.inputContainer}>
+            <FontAwesome name="lock" style={styles.icon} />
+            <TextInput
+              style={styles.input}
+              placeholder="Password"
+              placeholderTextColor="#ccc"
+              secureTextEntry={!showPassword}
+            />
+            <FontAwesome
+              name={showPassword ? "eye-slash" : "eye"}
+              style={styles.icon}
+              onPress={togglePasswordVisibility}
+            />
+          </View>
 
-      <View style={styles.inputContainer}>
-        <FontAwesome name="lock" style={styles.icon} />
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          secureTextEntry={!showPassword}
-        />
-        <FontAwesome
-          name={showPassword ? "eye-slash" : "eye"}
-          style={styles.icon}
-          onPress={togglePasswordVisibility}
-        />
-      </View>
+          <View style={styles.reminderContainer}>
+            <Pressable style={styles.rememberContainer} onPress={toggleRememberMe}>
+              <FontAwesome
+                name={isRemembered ? "check-square" : "square-o"}
+                style={styles.icon}
+              />
+              <Text style={styles.reminderText}>Remember Me</Text>
+            </Pressable>
 
-      <View style={styles.reminderContainer}>
-        <Pressable style={styles.rememberContainer} onPress={toggleRememberMe}>
-          <FontAwesome
-            name={isRemembered ? "check-square" : "square-o"}
-            style={styles.icon}
-          />
-          <Text style={styles.reminderText}>Remember Me</Text>
-        </Pressable>
+            <Link href="/login/forgot-password" style={styles.reminderText}>
+              Forgot Password?
+            </Link>
+          </View>
 
-        <Link href="/login/forgot-password" style={styles.reminderText}>
-          Forgot Password?
-        </Link>
-      </View>
+          <TouchableOpacity style={styles.button} onPress={handleLogin}>
+            <Text style={styles.buttonText}>LOGIN</Text>
+          </TouchableOpacity>
 
-      <TouchableOpacity style={styles.button} onPress={handleLogin}>
-        <Text style={styles.buttonText}>LOGIN</Text>
-      </TouchableOpacity>
-
-      <Text style={styles.footer}>
-        Don’t have an account?{" "}
-        <Link href="/login/register" style={styles.link}>
-          Sign Up
-        </Link>
-      </Text>
-    </View>
+          <Text style={styles.footer}>
+            Don’t have an account?{" "}
+            <Link href="/login/register" style={styles.link}>
+              Sign Up
+            </Link>
+          </Text>
+        </View>
+      </LinearGradient>
+    </ImageBackground>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  background: { flex: 1, width: "100%", height: "100%" },
+  overlay: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: 50,
-    backgroundColor: "#fff",
+    paddingHorizontal: 30,
   },
-  logo: {
-    width: 150,
-    height: 150,
-    marginBottom: 20,
+  container: {
+    width: "100%",
+    maxWidth: 400,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    padding: 25,
+    borderRadius: 20,
   },
   title: {
-    fontSize: 40,
+    fontSize: 36,
     fontWeight: "bold",
-    marginBottom: 20,
+    color: "#fcbf49",
+    textAlign: "center",
+    marginBottom: 25,
   },
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
-    borderWidth: 2,
+    borderWidth: 1.5,
     borderColor: "#fcbf49",
     borderRadius: 30,
-    marginVertical: 12,
+    marginVertical: 10,
     width: "100%",
     paddingHorizontal: 15,
-    marginBottom: 20,
   },
   icon: {
-    fontSize: 20,
+    fontSize: 18,
     color: "#fcbf49",
     marginHorizontal: 5,
   },
   input: {
     flex: 1,
     padding: 12,
+    color: "#fff",
   },
   button: {
     backgroundColor: "#fcbf49",
     padding: 14,
-    borderRadius: 8,
+    borderRadius: 25,
     alignItems: "center",
     width: "100%",
     marginVertical: 20,
@@ -129,9 +141,12 @@ const styles = StyleSheet.create({
   buttonText: {
     fontWeight: "bold",
     color: "#000",
+    fontSize: 16,
   },
   footer: {
     fontSize: 14,
+    color: "#fff",
+    textAlign: "center",
   },
   link: {
     color: "#fcbf49",
@@ -139,14 +154,13 @@ const styles = StyleSheet.create({
   },
   reminderText: {
     fontSize: 12,
-    color: "#555",
+    color: "#fff",
     fontWeight: "bold",
   },
   reminderContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
     width: "100%",
-    paddingHorizontal: 10,
     marginBottom: 10,
   },
   rememberContainer: {
