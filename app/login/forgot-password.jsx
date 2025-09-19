@@ -1,77 +1,88 @@
-import { FontAwesome } from "@expo/vector-icons"; // 👈 import icons
+import { FontAwesome } from "@expo/vector-icons";
 import { Link } from "expo-router";
 import { useState } from "react";
-import { Image, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import {
+  ImageBackground,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
 
   const handleReset = () => {
-    // ⚡ Here you’ll integrate with your backend / Firebase / API
     alert(`Password reset link sent to: ${email}`);
   };
 
   return (
-    <View style={styles.container}>
-      <Image
-        source={require("../../assets/images/mirage-logo.png")}
-        style={styles.logo}
-      />
+    <ImageBackground
+      source={require("../../assets/images/anime-collage.png")}
+      style={styles.background}
+      resizeMode="cover"
+    >
+      <View style={styles.overlay}>
+        <Text style={styles.title}>Forgot Password</Text>
+        <Text style={styles.subtitle}>
+          Enter your email address and we’ll send you a link to reset your
+          password.
+        </Text>
 
-      <Text style={styles.title}>Forgot Password</Text>
+        <View style={styles.inputContainer}>
+          <FontAwesome name="envelope" style={styles.icon} />
+          <TextInput
+            style={styles.input}
+            placeholder="Email Address"
+            placeholderTextColor="#ccc"
+            keyboardType="email-address"
+            value={email}
+            onChangeText={setEmail}
+          />
+        </View>
 
-      <Text style={styles.subtitle}>
-        Enter your email address and we’ll send you a link to reset your password.
-      </Text>
+        <Pressable style={styles.button} onPress={handleReset}>
+          <Text style={styles.buttonText}>SEND RESET LINK</Text>
+        </Pressable>
 
-      <View style={styles.inputContainer}>
-        <FontAwesome name="envelope" style={styles.icon} />
-        <TextInput
-          style={styles.input}
-          placeholder="Email Address"
-          keyboardType="email-address"
-          value={email}
-          onChangeText={setEmail}
-        />
+        <Text style={styles.footer}>
+          Remember your password?{" "}
+          <Link href="/login/login" style={styles.link}>
+            Login
+          </Link>
+        </Text>
       </View>
-
-      <Pressable style={styles.button} onPress={handleReset}>
-        <Text style={styles.buttonText}>SEND RESET LINK</Text>
-      </Pressable>
-
-      <Text style={styles.footer}>
-        Remember your password?{" "}
-        <Link href="/" style={styles.link}>
-          Login
-        </Link>
-      </Text>
-    </View>
+    </ImageBackground>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    justifyContent: "center", 
-    alignItems: "center", 
-    padding: 50, 
-    backgroundColor: "#fff" 
+  background: {
+    flex: 1,
+    width: "100%",
+    height: "100%",
   },
-  logo: { 
-    width: 150, 
-    height: 150, 
-    marginBottom: 20 
+  overlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    backgroundColor: "rgba(0,0,0,0.5)",
   },
   title: {
-    fontSize: 32, 
-    fontWeight: "bold", 
-    marginBottom: 10 
+    fontSize: 32,
+    fontWeight: "bold",
+    color: "#fff",
+    marginBottom: 10,
+    textAlign: "center",
   },
   subtitle: {
     fontSize: 14,
-    color: "#555",
+    color: "#ddd",
     textAlign: "center",
     marginBottom: 20,
+    paddingHorizontal: 10,
   },
   inputContainer: {
     flexDirection: "row",
@@ -82,6 +93,7 @@ const styles = StyleSheet.create({
     width: "100%",
     paddingHorizontal: 15,
     marginBottom: 20,
+    backgroundColor: "rgba(0,0,0,0.6)",
   },
   icon: {
     fontSize: 20,
@@ -91,25 +103,28 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     paddingVertical: 12,
+    color: "#fff",
   },
-  button: { 
-    backgroundColor: "#fcbf49", 
-    padding: 14, 
-    borderRadius: 8, 
-    alignItems: "center", 
-    width: "100%", 
-    marginVertical: 20 
+  button: {
+    backgroundColor: "#fcbf49",
+    paddingVertical: 14,
+    borderRadius: 30,
+    alignItems: "center",
+    width: "100%",
+    marginVertical: 20,
   },
-  buttonText: { 
-    fontWeight: "bold", 
-    color: "#000" 
+  buttonText: {
+    fontWeight: "bold",
+    color: "#000",
+    fontSize: 16,
   },
-  footer: { 
-    fontSize: 14 
+  footer: {
+    fontSize: 14,
+    color: "#fff",
   },
-  link: { 
-    color: "#fcbf49", 
-    fontWeight: "bold" 
+  link: {
+    color: "#fcbf49",
+    fontWeight: "bold",
   },
 });
 
