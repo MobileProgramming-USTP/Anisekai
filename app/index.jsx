@@ -1,150 +1,110 @@
-import { FontAwesome } from "@expo/vector-icons";
-import { Link, useRouter } from "expo-router";
-import React, { useState } from "react";
-import { Image, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, View, } from "react-native";
+import MaskedView from "@react-native-masked-view/masked-view";
+import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
+import React from "react";
+import {
+  ImageBackground,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 const Index = () => {
-  // ✅ Hooks at top
-  const [isRemembered, setIsRemembered] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-
   const router = useRouter();
-
-  const toggleRememberMe = () => setIsRemembered(!isRemembered);
-  const togglePasswordVisibility = () => setShowPassword(!showPassword);
-
-  const handleLogin = () => {
-    router.push("/(tabs)/dashboard");
-  };
 
   return (
     <View style={styles.container}>
-      <Image
-        source={require("../assets/images/mirage-logo.png")}
-        style={styles.logo}
-      />
+      <ImageBackground
+        source={require("../assets/images/anime-collage.png")}
+        style={styles.background}
+        resizeMode="cover"
+      >
+        <LinearGradient
+          colors={["rgba(0,0,0,0.6)", "rgba(0,0,0,0.3)", "rgba(0,0,0,0.8)"]}
+          style={styles.overlay}
+        >
+          <View style={styles.content}>
+            <Text style={styles.title}>Welcome to</Text>
 
-      <Text style={styles.title}>Login</Text>
+            {/* ✅ Proper Gradient Text */}
+            <MaskedView
+              maskElement={
+                <Text style={styles.brand}>Anisekai</Text>
+              }
+            >
+              <LinearGradient
+                colors={["#36d1dc", "#5b5ff7", "#a445b2", "#ff0080"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+              >
+                <Text style={[styles.brand, { opacity: 0 }]}>Anisekai</Text>
+              </LinearGradient>
+            </MaskedView>
 
-      <View style={styles.inputContainer}>
-        <FontAwesome name="user" style={styles.icon} />
-        <TextInput style={styles.input} placeholder="Username" />
-      </View>
+            <Text style={styles.subtitle}>
+              Discover, Explore, and Dive into the World of Anime
+            </Text>
 
-      <View style={styles.inputContainer}>
-        <FontAwesome name="lock" style={styles.icon} />
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          secureTextEntry={!showPassword}
-        />
-        <FontAwesome
-          name={showPassword ? "eye-slash" : "eye"}
-          style={styles.icon}
-          onPress={togglePasswordVisibility}
-        />
-      </View>
-
-      <View style={styles.reminderContainer}>
-        <Pressable style={styles.rememberContainer} onPress={toggleRememberMe}>
-          <FontAwesome
-            name={isRemembered ? "check-square" : "square-o"}
-            style={styles.icon}
-          />
-          <Text style={styles.reminderText}>Remember Me</Text>
-        </Pressable>
-
-        <Link href="/login/forgot-password" style={styles.reminderText}>
-          Forgot Password?
-        </Link>
-      </View>
-
-      <TouchableOpacity style={styles.button} onPress={handleLogin}>
-        <Text style={styles.buttonText}>LOGIN</Text>
-      </TouchableOpacity>
-
-      <Text style={styles.footer}>
-        Don’t have an account?{" "}
-        <Link href="/login/register" style={styles.link}>
-          Sign Up
-        </Link>
-      </Text>
+            <TouchableOpacity
+              style={styles.button}
+              onPress={() => router.push("/login")}
+            >
+              <Text style={styles.buttonText}>Get Started</Text>
+            </TouchableOpacity>
+          </View>
+        </LinearGradient>
+      </ImageBackground>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  container: { flex: 1 },
+  background: { flex: 1, width: "100%", height: "100%" },
+  overlay: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: 50,
-    backgroundColor: "#fff",
+    paddingHorizontal: 20,
   },
-  logo: {
-    width: 150,
-    height: 150,
-    marginBottom: 20,
-  },
+  content: { alignItems: "center" },
   title: {
-    fontSize: 40,
+    fontSize: 22,
+    fontWeight: "600",
+    color: "#fff",
+    marginBottom: 5,
+    textAlign: "center",
+  },
+  brand: {
+    fontSize: 65,
     fontWeight: "bold",
-    marginBottom: 20,
+    textAlign: "center",
+    borderColor: "#000000ff",
   },
-  inputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderWidth: 2,
-    borderColor: "#fcbf49",
-    borderRadius: 30,
-    marginVertical: 12,
-    width: "100%",
-    paddingHorizontal: 15,
-    marginBottom: 20,
-  },
-  icon: {
-    fontSize: 20,
-    color: "#fcbf49",
-    marginHorizontal: 5,
-  },
-  input: {
-    flex: 1,
-    padding: 12,
+  subtitle: {
+    fontSize: 16,
+    color: "#eee",
+    textAlign: "center",
+    marginBottom: 25,
+    paddingHorizontal: 10,
+    marginTop: 15,
   },
   button: {
     backgroundColor: "#fcbf49",
-    padding: 14,
-    borderRadius: 8,
-    alignItems: "center",
-    width: "100%",
-    marginVertical: 20,
+    paddingVertical: 14,
+    paddingHorizontal: 40,
+    borderRadius: 30,
+    shadowColor: "#fcbf49",
+    shadowOpacity: 0.6,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 8,
+    elevation: 8,
   },
   buttonText: {
     fontWeight: "bold",
     color: "#000",
-  },
-  footer: {
-    fontSize: 14,
-  },
-  link: {
-    color: "#fcbf49",
-    fontWeight: "bold",
-  },
-  reminderText: {
-    fontSize: 12,
-    color: "#555",
-    fontWeight: "bold",
-  },
-  reminderContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    width: "100%",
-    paddingHorizontal: 10,
-    marginBottom: 10,
-  },
-  rememberContainer: {
-    flexDirection: "row",
-    alignItems: "center",
+    fontSize: 18,
   },
 });
 
