@@ -22,7 +22,7 @@ const Login = () => {
   const togglePasswordVisibility = () => setShowPassword(!showPassword);
 
   const handleLogin = () => {
-    router.push("/(tabs)/dashboard");
+    router.push("/(tabs)/home");
   };
 
   return (

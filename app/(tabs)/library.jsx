@@ -1,6 +1,6 @@
 import { View, Text } from "react-native"
 
-const profile = () => {
+const library = () => {
   return (
     <View>
         <Text></Text>
@@ -8,4 +8,4 @@ const profile = () => {
   )
 }
 
-export default profile
+export default library
