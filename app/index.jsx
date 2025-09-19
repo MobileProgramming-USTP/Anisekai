@@ -21,17 +21,14 @@ const Index = () => {
         resizeMode="cover"
       >
         <LinearGradient
-          colors={["rgba(0,0,0,0.6)", "rgba(0,0,0,0.3)", "rgba(0,0,0,0.8)"]}
+          colors={["rgba(0,0,0,0.85)", "rgba(0,0,0,0.6)", "rgba(0,0,0,0.9)"]}
           style={styles.overlay}
         >
           <View style={styles.content}>
             <Text style={styles.title}>Welcome to</Text>
 
-            {/* ✅ Proper Gradient Text */}
             <MaskedView
-              maskElement={
-                <Text style={styles.brand}>Anisekai</Text>
-              }
+              maskElement={<Text style={styles.brand}>Anisekai</Text>}
             >
               <LinearGradient
                 colors={["#36d1dc", "#5b5ff7", "#a445b2", "#ff0080"]}
@@ -43,16 +40,23 @@ const Index = () => {
             </MaskedView>
 
             <Text style={styles.subtitle}>
-              Discover, Explore, and Dive into the World of Anime
+              Discover, Stream, and Dive into the World of Anime
             </Text>
 
             <TouchableOpacity
               style={styles.button}
               onPress={() => router.push("/login/login")}
+              activeOpacity={0.85}
             >
-              <Text style={styles.buttonText}>Get Started</Text>
+              <LinearGradient
+                colors={["#ff0080", "#a445b2", "#5b5ff7"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.buttonGradient}
+              >
+                <Text style={styles.buttonText}>Get Started</Text>
+              </LinearGradient>
             </TouchableOpacity>
-
           </View>
         </LinearGradient>
       </ImageBackground>
@@ -71,41 +75,50 @@ const styles = StyleSheet.create({
   },
   content: { alignItems: "center" },
   title: {
-    fontSize: 22,
-    fontWeight: "600",
+    fontSize: 20,
+    fontWeight: "300",
     color: "#fff",
     marginBottom: 5,
     textAlign: "center",
+    letterSpacing: 2,
+    textTransform: "uppercase",
   },
   brand: {
-    fontSize: 65,
-    fontWeight: "bold",
+    fontSize: 70,
+    fontWeight: "900",
     textAlign: "center",
-    borderColor: "#000000ff",
+    textShadowColor: "rgba(255,255,255,0.5)",
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 12,
   },
   subtitle: {
     fontSize: 16,
-    color: "#eee",
+    color: "#ddd",
     textAlign: "center",
-    marginBottom: 25,
-    paddingHorizontal: 10,
+    marginBottom: 35,
     marginTop: 15,
+    lineHeight: 22,
+    maxWidth: 300,
   },
   button: {
-    backgroundColor: "#fcbf49",
-    paddingVertical: 14,
-    paddingHorizontal: 40,
     borderRadius: 30,
-    shadowColor: "#fcbf49",
-    shadowOpacity: 0.6,
-    shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 8,
-    elevation: 8,
+    overflow: "hidden",
+    elevation: 10,
+    shadowColor: "#ff0080",
+    shadowOpacity: 0.7,
+    shadowOffset: { width: 0, height: 6 },
+    shadowRadius: 10,
+  },
+  buttonGradient: {
+    paddingVertical: 14,
+    paddingHorizontal: 50,
+    borderRadius: 30,
   },
   buttonText: {
     fontWeight: "bold",
-    color: "#000",
+    color: "#fff",
     fontSize: 18,
+    textAlign: "center",
   },
 });
 
