@@ -1,4 +1,5 @@
 import { FontAwesome } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { Link } from "expo-router";
 import { useState } from "react";
 import {
@@ -23,59 +24,66 @@ const ForgotPassword = () => {
       style={styles.background}
       resizeMode="cover"
     >
-      <View style={styles.overlay}>
-        <Text style={styles.title}>Forgot Password</Text>
-        <Text style={styles.subtitle}>
-          Enter your email address and we’ll send you a link to reset your
-          password.
-        </Text>
+      <LinearGradient
+        colors={["rgba(0,0,0,0.8)", "rgba(0,0,0,0.4)", "rgba(0,0,0,0.8)"]}
+        style={styles.overlay}
+      >
+        <View style={styles.container}>
+          <Text style={styles.title}>Forgot Password</Text>
+          <Text style={styles.subtitle}>
+            Enter your email address and we’ll send you a link to reset your
+            password.
+          </Text>
 
-        <View style={styles.inputContainer}>
-          <FontAwesome name="envelope" style={styles.icon} />
-          <TextInput
-            style={styles.input}
-            placeholder="Email Address"
-            placeholderTextColor="#ccc"
-            keyboardType="email-address"
-            value={email}
-            onChangeText={setEmail}
-          />
+          <View style={styles.inputContainer}>
+            <FontAwesome name="envelope" style={styles.icon} />
+            <TextInput
+              style={styles.input}
+              placeholder="Email Address"
+              placeholderTextColor="#ccc"
+              keyboardType="email-address"
+              value={email}
+              onChangeText={setEmail}
+            />
+          </View>
+
+          <Pressable style={styles.button} onPress={handleReset}>
+            <Text style={styles.buttonText}>SEND RESET LINK</Text>
+          </Pressable>
+
+          <Text style={styles.footer}>
+            Remember your password?{" "}
+            <Link href="/login/login" style={styles.link}>
+              Login
+            </Link>
+          </Text>
         </View>
-
-        <Pressable style={styles.button} onPress={handleReset}>
-          <Text style={styles.buttonText}>SEND RESET LINK</Text>
-        </Pressable>
-
-        <Text style={styles.footer}>
-          Remember your password?{" "}
-          <Link href="/login/login" style={styles.link}>
-            Login
-          </Link>
-        </Text>
-      </View>
+      </LinearGradient>
     </ImageBackground>
   );
 };
 
 const styles = StyleSheet.create({
-  background: {
-    flex: 1,
-    width: "100%",
-    height: "100%",
-  },
+  background: { flex: 1, width: "100%", height: "100%" },
   overlay: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 20,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    paddingHorizontal: 30,
+  },
+  container: {
+    width: "100%",
+    maxWidth: 400,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    padding: 25,
+    borderRadius: 20,
   },
   title: {
     fontSize: 32,
     fontWeight: "bold",
-    color: "#fff",
-    marginBottom: 10,
+    color: "#fcbf49",
     textAlign: "center",
+    marginBottom: 10,
   },
   subtitle: {
     fontSize: 14,
@@ -87,28 +95,27 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
-    borderWidth: 2,
+    borderWidth: 1.5,
     borderColor: "#fcbf49",
     borderRadius: 30,
+    marginVertical: 10,
     width: "100%",
     paddingHorizontal: 15,
-    marginBottom: 20,
-    backgroundColor: "rgba(0,0,0,0.6)",
   },
   icon: {
-    fontSize: 20,
+    fontSize: 18,
     color: "#fcbf49",
-    marginRight: 10,
+    marginHorizontal: 5,
   },
   input: {
     flex: 1,
-    paddingVertical: 12,
+    padding: 12,
     color: "#fff",
   },
   button: {
     backgroundColor: "#fcbf49",
-    paddingVertical: 14,
-    borderRadius: 30,
+    padding: 14,
+    borderRadius: 25,
     alignItems: "center",
     width: "100%",
     marginVertical: 20,
@@ -121,6 +128,7 @@ const styles = StyleSheet.create({
   footer: {
     fontSize: 14,
     color: "#fff",
+    textAlign: "center",
   },
   link: {
     color: "#fcbf49",
