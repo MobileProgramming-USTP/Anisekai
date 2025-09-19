@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons"
 import { Tabs } from "expo-router"
-import { Pressable, Platform } from "react-native"
+import { Platform, Pressable } from "react-native"
 
 export default function TabsLayout() {
   return (
@@ -31,16 +31,6 @@ export default function TabsLayout() {
     >
 
       <Tabs.Screen
-        name="home"
-        options={{
-          title: "Home",
-          tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons name={focused ? "grid" : "grid-outline"} size={size} color={color} />
-          ),
-        }}
-      />
-
-      <Tabs.Screen
         name="explore"
         options={{
           title: "Explore",
@@ -56,6 +46,16 @@ export default function TabsLayout() {
           title: "Library",
           tabBarIcon: ({ color, size, focused }) => (
             <Ionicons name={focused ? "bookmark" : "bookmark-outline"} size={size} color={color} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="home"
+        options={{
+          title: "Home",
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? "grid" : "grid-outline"} size={size} color={color} />
           ),
         }}
       />
