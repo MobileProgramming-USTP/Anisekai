@@ -48,10 +48,11 @@ const Index = () => {
 
             <TouchableOpacity
               style={styles.button}
-              onPress={() => router.push("/login")}
+              onPress={() => router.push("/login/login")}
             >
               <Text style={styles.buttonText}>Get Started</Text>
             </TouchableOpacity>
+
           </View>
         </LinearGradient>
       </ImageBackground>
