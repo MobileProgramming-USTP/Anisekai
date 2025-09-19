@@ -1,68 +1,80 @@
 import { FontAwesome } from "@expo/vector-icons";
 import { Link } from "expo-router";
-import { Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { ImageBackground, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 const Register = () => {
   return (
-    <View style={styles.container}>
-      <Image
-        source={require("../../assets/images/mirage-logo.png")} 
-        style={styles.logo}
-      />
+    <ImageBackground
+      source={require("../login/assets/anime-collage.png")}
+      style={styles.background}
+      resizeMode="cover"
+    >
+      <View style={styles.overlay}>
+        <Text style={styles.title}>Register</Text>
 
-      <Text style={styles.title}>Register</Text>
+        {/* Username */}
+        <View style={styles.inputContainer}>
+          <FontAwesome name="user" style={styles.icon} />
+          <TextInput style={styles.input} placeholder="Username" placeholderTextColor="#ddd" />
+        </View>
 
-      <View style={styles.inputContainer}>
-        <FontAwesome name="user" style={styles.icon} />
-        <TextInput style={styles.input} placeholder="Username" />
+        {/* Password */}
+        <View style={styles.inputContainer}>
+          <FontAwesome name="lock" style={styles.icon} />
+          <TextInput style={styles.input} placeholder="Password" secureTextEntry placeholderTextColor="#ddd" />
+        </View>
+
+        {/* Email */}
+        <View style={styles.inputContainer}>
+          <FontAwesome name="envelope" style={styles.icon} />
+          <TextInput style={styles.input} placeholder="Email" keyboardType="email-address" placeholderTextColor="#ddd" />
+        </View>
+
+        {/* Mobile */}
+        <View style={styles.inputContainer}>
+          <FontAwesome name="phone" style={styles.icon} />
+          <TextInput style={styles.input} placeholder="Mobile" keyboardType="numeric" placeholderTextColor="#ddd" />
+        </View>
+
+        {/* Button */}
+        <TouchableOpacity style={styles.button}>
+          <Text style={styles.buttonText}>CREATE ACCOUNT</Text>
+        </TouchableOpacity>
+
+        {/* Footer */}
+        <Text style={styles.footer}>
+          Already have an account?{" "}
+          <Link href="/login/login" style={styles.link}>
+            Login
+          </Link>
+        </Text>
       </View>
-
-      <View style={styles.inputContainer}>
-        <FontAwesome name="lock" style={styles.icon} />
-        <TextInput style={styles.input} placeholder="Password" secureTextEntry />
-      </View>
-
-      <View style={styles.inputContainer}>
-        <FontAwesome name="envelope" style={styles.icon} />
-        <TextInput style={styles.input} placeholder="Email" keyboardType="email-address" />
-      </View>
-
-      <View style={styles.inputContainer}>
-        <FontAwesome name="phone" style={styles.icon} />
-        <TextInput style={styles.input} placeholder="Mobile" keyboardType="numeric" />
-      </View>
-
-      <TouchableOpacity style={styles.button}>
-        <Text style={styles.buttonText}>CREATE ACCOUNT</Text>
-      </TouchableOpacity>
-
-      <Text style={styles.footer}>
-        Already have an account?{" "}
-        <Link href="/" style={styles.link}>
-          Login
-        </Link>
-      </Text>
-    </View>
+    </ImageBackground>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    justifyContent: "center", 
-    alignItems: "center", 
-    padding: 50, 
-    backgroundColor: "#fff", 
+  background: {
+    flex: 1,
+    width: "100%",
+    height: "100%",
+    justifyContent: "center",
+    alignItems: "center",
   },
-  logo: { 
-    width: 150, 
-    height: 150, 
-    marginBottom: 20 
+  overlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.6)", // dark overlay for readability
+    width: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 24,
   },
   title: { 
     fontSize: 40, 
     fontWeight: "bold", 
-    marginBottom: 20 
+    color: "#fff", 
+    marginBottom: 20, 
+    textAlign: "center"
   },
   inputContainer: {
     flexDirection: "row",
@@ -73,16 +85,17 @@ const styles = StyleSheet.create({
     marginVertical: 8,
     width: "100%",
     paddingHorizontal: 15,
+    backgroundColor: "rgba(255,255,255,0.1)", // translucent input bg
   },
   icon: {
     fontSize: 20,
     color: "#fcbf49",
     marginRight: 5,
-    marginLeft: 5,
   },
   input: {
     flex: 1,
     padding: 12,
+    color: "#fff", // white text inside inputs
   },
   button: { 
     backgroundColor: "#fcbf49", 
@@ -97,7 +110,9 @@ const styles = StyleSheet.create({
     color: "#000" 
   },
   footer: { 
-    fontSize: 14 
+    fontSize: 14,
+    color: "#fff",
+    marginTop: 10
   },
   link: { 
     color: "#fcbf49", 
