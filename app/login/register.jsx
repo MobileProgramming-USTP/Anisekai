@@ -39,7 +39,8 @@ const Register = () => {
         { text: "OK", onPress: () => router.push("/login/login") },
       ]);
     } catch (err) {
-      Alert.alert("Registration Failed", err.message || "Something went wrong.");
+      const message = err?.data?.details ?? err?.message ?? "Something went wrong.";
+      Alert.alert("Registration Failed", message);
     } finally {
       setLoading(false);
     }

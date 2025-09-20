@@ -39,8 +39,9 @@
       "typedRoutes": true
     },
     "extra": {
-      "convexDevUrl": "http://192.168.1.11:3210",         
-      "convexProdUrl": "https://fantastic-frog-593.convex.cloud"  
+      "convexProdUrl": "https://benevolent-peccary-166.convex.cloud",
+      "convexDefaultEnv": "production",
+      "convexDevUrl": "http://192.168.1.11:3210"
     }
   }
 }

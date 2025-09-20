@@ -4,17 +4,24 @@ import { ConvexProvider, ConvexReactClient } from "convex/react";
 import Constants from "expo-constants";
 import { AuthProvider } from "./context/AuthContext";
 
-const isDev = __DEV__; // Expo sets this automatically
-
 const resolveConvexUrl = () => {
-  const envUrl = process.env.EXPO_PUBLIC_CONVEX_URL;
-  if (envUrl && envUrl.length > 0) {
+  const envUrl = process.env.EXPO_PUBLIC_CONVEX_URL?.trim();
+  if (envUrl) {
     return envUrl;
   }
 
   const extras = Constants?.expoConfig?.extra ?? {};
+  const requestedEnv = (
+    process.env.EXPO_PUBLIC_CONVEX_ENV ||
+    extras.convexDefaultEnv ||
+    (__DEV__ ? "development" : "production")
+  ).toLowerCase();
 
-  if (isDev && typeof extras.convexDevUrl === "string" && extras.convexDevUrl.length > 0) {
+  if (requestedEnv === "production" && typeof extras.convexProdUrl === "string" && extras.convexProdUrl.length > 0) {
+    return extras.convexProdUrl;
+  }
+
+  if (requestedEnv === "development" && typeof extras.convexDevUrl === "string" && extras.convexDevUrl.length > 0) {
     return extras.convexDevUrl;
   }
 
