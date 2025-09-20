@@ -3,26 +3,46 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Link, useRouter } from "expo-router";
 import { useState } from "react";
 import {
-    ImageBackground,
-    Pressable,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  ImageBackground,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+  ActivityIndicator,
 } from "react-native";
+import { useMutation } from "convex/react";
+import { api } from "../../convex/_generated/api";
+import { useAuth } from "../context/AuthContext";
 
 const Login = () => {
-  const [isRemembered, setIsRemembered] = useState(false);
+  const router = useRouter();
+  const { signIn } = useAuth();
+  const loginUser = useMutation(api["functions/auth"].login);
+
+  const [form, setForm] = useState({ email: "", password: "" });
+  const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  const router = useRouter();
+  const handleLogin = async () => {
+    if (!form.email || !form.password) {
+      Alert.alert("Missing Fields", "Please enter email and password.");
+      return;
+    }
 
-  const toggleRememberMe = () => setIsRemembered(!isRemembered);
-  const togglePasswordVisibility = () => setShowPassword(!showPassword);
-
-  const handleLogin = () => {
-    router.push("/(tabs)/home");
+    try {
+      setLoading(true);
+      const user = await loginUser(form);
+      signIn(user);
+      Alert.alert("Welcome", `Hello, ${user.username}!`, [
+        { text: "OK", onPress: () => router.replace("/(tabs)/home") },
+      ]);
+    } catch (err) {
+      Alert.alert("Login Failed", err.message || "Invalid credentials.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -39,8 +59,15 @@ const Login = () => {
           <Text style={styles.title}>Login</Text>
 
           <View style={styles.inputContainer}>
-            <FontAwesome name="user" style={styles.icon} />
-            <TextInput style={styles.input} placeholder="Username" placeholderTextColor="#ccc" />
+            <FontAwesome name="envelope" style={styles.icon} />
+            <TextInput
+              style={styles.input}
+              placeholder="Email"
+              placeholderTextColor="#ccc"
+              autoCapitalize="none"
+              value={form.email}
+              onChangeText={(t) => setForm({ ...form, email: t })}
+            />
           </View>
 
           <View style={styles.inputContainer}>
@@ -50,30 +77,26 @@ const Login = () => {
               placeholder="Password"
               placeholderTextColor="#ccc"
               secureTextEntry={!showPassword}
+              value={form.password}
+              onChangeText={(t) => setForm({ ...form, password: t })}
             />
             <FontAwesome
               name={showPassword ? "eye-slash" : "eye"}
               style={styles.icon}
-              onPress={togglePasswordVisibility}
+              onPress={() => setShowPassword(!showPassword)}
             />
           </View>
 
-          <View style={styles.reminderContainer}>
-            <Pressable style={styles.rememberContainer} onPress={toggleRememberMe}>
-              <FontAwesome
-                name={isRemembered ? "check-square" : "square-o"}
-                style={styles.icon}
-              />
-              <Text style={styles.reminderText}>Remember Me</Text>
-            </Pressable>
-
-            <Link href="/login/forgot-password" style={styles.reminderText}>
-              Forgot Password?
-            </Link>
-          </View>
-
-          <TouchableOpacity style={styles.button} onPress={handleLogin}>
-            <Text style={styles.buttonText}>LOGIN</Text>
+          <TouchableOpacity
+            style={[styles.button, loading && { opacity: 0.6 }]}
+            onPress={handleLogin}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#000" />
+            ) : (
+              <Text style={styles.buttonText}>LOGIN</Text>
+            )}
           </TouchableOpacity>
 
           <Text style={styles.footer}>
@@ -152,21 +175,9 @@ const styles = StyleSheet.create({
     color: "#fcbf49",
     fontWeight: "bold",
   },
-  reminderText: {
-    fontSize: 12,
-    color: "#fff",
-    fontWeight: "bold",
-  },
-  reminderContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    width: "100%",
-    marginBottom: 10,
-  },
-  rememberContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
 });
 
 export default Login;
+
+
+

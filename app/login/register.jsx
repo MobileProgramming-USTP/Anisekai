@@ -1,13 +1,48 @@
 import { FontAwesome } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { Link, useRouter } from "expo-router";
-import { ImageBackground, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { useState } from "react";
+import {
+  Alert,
+  ImageBackground,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+  ActivityIndicator,
+} from "react-native";
+import { useMutation } from "convex/react";
+import { api } from "../../convex/_generated/api";
 
 const Register = () => {
   const router = useRouter();
+  const registerUser = useMutation(api["functions/auth"].register);
 
-  const handleRegister = () => {
-    router.push("/login/login");
+  const [form, setForm] = useState({
+    username: "",
+    email: "",
+    password: "",
+  });
+  const [loading, setLoading] = useState(false);
+
+  const handleRegister = async () => {
+    if (!form.username || !form.email || !form.password) {
+      Alert.alert("Missing Fields", "Please fill in all fields.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await registerUser(form);
+      Alert.alert("Success", "Account created successfully!", [
+        { text: "OK", onPress: () => router.push("/login/login") },
+      ]);
+    } catch (err) {
+      Alert.alert("Registration Failed", err.message || "Something went wrong.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -25,16 +60,12 @@ const Register = () => {
 
           <View style={styles.inputContainer}>
             <FontAwesome name="user" style={styles.icon} />
-            <TextInput style={styles.input} placeholder="Username" placeholderTextColor="#ccc" />
-          </View>
-
-          <View style={styles.inputContainer}>
-            <FontAwesome name="lock" style={styles.icon} />
             <TextInput
               style={styles.input}
-              placeholder="Password"
+              placeholder="Username"
               placeholderTextColor="#ccc"
-              secureTextEntry
+              value={form.username}
+              onChangeText={(t) => setForm({ ...form, username: t })}
             />
           </View>
 
@@ -45,21 +76,34 @@ const Register = () => {
               placeholder="Email"
               keyboardType="email-address"
               placeholderTextColor="#ccc"
+              autoCapitalize="none"
+              value={form.email}
+              onChangeText={(t) => setForm({ ...form, email: t })}
             />
           </View>
 
           <View style={styles.inputContainer}>
-            <FontAwesome name="phone" style={styles.icon} />
+            <FontAwesome name="lock" style={styles.icon} />
             <TextInput
               style={styles.input}
-              placeholder="Mobile"
-              keyboardType="numeric"
+              placeholder="Password"
               placeholderTextColor="#ccc"
+              secureTextEntry
+              value={form.password}
+              onChangeText={(t) => setForm({ ...form, password: t })}
             />
           </View>
 
-          <TouchableOpacity style={styles.button} onPress={handleRegister}>
-            <Text style={styles.buttonText}>CREATE ACCOUNT</Text>
+          <TouchableOpacity
+            style={[styles.button, loading && { opacity: 0.6 }]}
+            onPress={handleRegister}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#000" />
+            ) : (
+              <Text style={styles.buttonText}>CREATE ACCOUNT</Text>
+            )}
           </TouchableOpacity>
 
           <Text style={styles.footer}>
