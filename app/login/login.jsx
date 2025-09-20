@@ -46,7 +46,8 @@ const Login = () => {
         { text: "OK", onPress: () => router.replace("/(tabs)/home") },
       ]);
     } catch (err) {
-      Alert.alert("Login Failed", err.message || "Invalid credentials.");
+      const message = err?.data?.details ?? err?.message ?? "Invalid credentials."
+      Alert.alert("Login Failed", message);
     } finally {
       setLoading(false);
     }

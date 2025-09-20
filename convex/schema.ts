@@ -7,5 +7,7 @@ export default defineSchema({
     email: v.string(),
     password: v.string(),
     createdAt: v.number(),
-  }),
+  })
+    .index("byEmail", ["email"])
+    .index("byUsername", ["username"]),
 });
