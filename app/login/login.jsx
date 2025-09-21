@@ -11,10 +11,10 @@ import {
   TouchableOpacity,
   View
 } from "react-native";
-import styles from "../styles/loginStyles";
 import WelcomeBanner from "../../components/WelcomeBanner";
 import { api } from "../../convex/_generated/api";
 import { useAuth } from "../context/AuthContext";
+import styles from "../styles/loginStyles";
 
 const Login = () => {
   const router = useRouter();
@@ -48,7 +48,7 @@ const Login = () => {
       setShowWelcome(true);
 
       // redirect after banner fades out
-      setTimeout(() => router.replace("/(tabs)/home"), 2800);
+      setTimeout(() => router.replace("/(tabs)/home"), 1800);
     } catch (err) {
       const message = err?.data?.details ?? err?.message ?? "Invalid credentials.";
       alert("Login Failed: " + message);
