@@ -1,4 +1,4 @@
-import { FontAwesome } from "@expo/vector-icons";
+﻿import { FontAwesome } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { Link, useRouter } from "expo-router";
 import { useState } from "react";
@@ -25,6 +25,7 @@ const Register = () => {
     password: "",
   });
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleRegister = async () => {
     if (!form.username || !form.email || !form.password) {
@@ -89,10 +90,23 @@ const Register = () => {
               style={styles.input}
               placeholder="Password"
               placeholderTextColor="#ccc"
-              secureTextEntry
+              secureTextEntry={!showPassword}
               value={form.password}
               onChangeText={(t) => setForm({ ...form, password: t })}
             />
+            <TouchableOpacity
+              style={styles.toggleButton}
+              onPress={() => setShowPassword((prev) => !prev)}
+              activeOpacity={0.7}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              accessibilityRole="button"
+              accessibilityLabel={`${showPassword ? "Hide" : "Show"} password`}
+            >
+              <FontAwesome
+                name={showPassword ? "eye-slash" : "eye"}
+                style={styles.toggleIcon}
+              />
+            </TouchableOpacity>
           </View>
 
           <TouchableOpacity
@@ -161,6 +175,14 @@ const styles = StyleSheet.create({
     padding: 12,
     color: "#fff",
   },
+  toggleButton: {
+    padding: 6,
+  },
+  toggleIcon: {
+    fontSize: 18,
+    color: "#fcbf49",
+    marginLeft: 4,
+  },
   button: {
     backgroundColor: "#fcbf49",
     padding: 14,
@@ -186,3 +208,4 @@ const styles = StyleSheet.create({
 });
 
 export default Register;
+
