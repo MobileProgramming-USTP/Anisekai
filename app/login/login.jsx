@@ -1,18 +1,18 @@
 import { FontAwesome } from "@expo/vector-icons";
+import { useMutation } from "convex/react";
 import { LinearGradient } from "expo-linear-gradient";
 import { Link, useRouter } from "expo-router";
 import { useState } from "react";
 import {
-  Alert,
+  ActivityIndicator,
   ImageBackground,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
-  ActivityIndicator,
+  View
 } from "react-native";
-import { useMutation } from "convex/react";
+import WelcomeBanner from "../../components/WelcomeBanner";
 import { api } from "../../convex/_generated/api";
 import { useAuth } from "../context/AuthContext";
 
@@ -26,12 +26,13 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  // 🔹 Banner state
+  const [showWelcome, setShowWelcome] = useState(false);
+  const [loggedUser, setLoggedUser] = useState(null);
+
   const handleLogin = async () => {
     if (!form.identifier || !form.password) {
-      Alert.alert(
-        "Missing Fields",
-        "Please enter a username/email and password."
-      );
+      alert("Please enter a username/email and password.");
       return;
     }
 
@@ -42,12 +43,15 @@ const Login = () => {
         password: form.password,
       });
       signIn(user);
-      Alert.alert("Welcome", `Hello, ${user.username}!`, [
-        { text: "OK", onPress: () => router.replace("/(tabs)/home") },
-      ]);
+
+      setLoggedUser(user.username);
+      setShowWelcome(true);
+
+      // redirect after banner fades out
+      setTimeout(() => router.replace("/(tabs)/home"), 2800);
     } catch (err) {
-      const message = err?.data?.details ?? err?.message ?? "Invalid credentials."
-      Alert.alert("Login Failed", message);
+      const message = err?.data?.details ?? err?.message ?? "Invalid credentials.";
+      alert("Login Failed: " + message);
     } finally {
       setLoading(false);
     }
@@ -132,6 +136,11 @@ const Login = () => {
             </Link>
           </Text>
         </View>
+
+        {/* 🔹 Show Welcome Banner */}
+        {showWelcome && (
+          <WelcomeBanner username={loggedUser} onFinish={() => setShowWelcome(false)} />
+        )}
       </LinearGradient>
     </ImageBackground>
   );
@@ -232,6 +241,26 @@ const styles = StyleSheet.create({
   },
   link: {
     color: "#fcbf49",
+    fontWeight: "bold",
+  },
+  // 🔹 Banner styles
+  banner: {
+    position: "absolute",
+    top: 60,
+    left: "10%",
+    right: "10%",
+    padding: 15,
+    borderRadius: 20,
+    alignItems: "center",
+    backgroundColor: "rgba(252,191,73,0.9)",
+    shadowColor: "#000",
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 5,
+  },
+  bannerText: {
+    color: "#000",
+    fontSize: 18,
     fontWeight: "bold",
   },
 });
