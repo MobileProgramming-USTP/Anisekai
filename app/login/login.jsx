@@ -92,11 +92,19 @@ const Login = () => {
               value={form.password}
               onChangeText={(t) => setForm({ ...form, password: t })}
             />
-            <FontAwesome
-              name={showPassword ? "eye-slash" : "eye"}
-              style={styles.icon}
-              onPress={() => setShowPassword(!showPassword)}
-            />
+            <TouchableOpacity
+              style={styles.toggleButton}
+              onPress={() => setShowPassword((prev) => !prev)}
+              activeOpacity={0.7}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              accessibilityRole="button"
+              accessibilityLabel={`${showPassword ? "Hide" : "Show"} password`}
+            >
+              <FontAwesome
+                name={showPassword ? "eye-slash" : "eye"}
+                style={styles.toggleIcon}
+              />
+            </TouchableOpacity>
           </View>
 
           <View style={styles.optionsRow}>
@@ -187,6 +195,14 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 12,
     color: "#fff",
+  },
+  toggleButton: {
+    padding: 6,
+  },
+  toggleIcon: {
+    fontSize: 18,
+    color: "#fcbf49",
+    marginLeft: 4,
   },
   optionsRow: {
     flexDirection: "row",
