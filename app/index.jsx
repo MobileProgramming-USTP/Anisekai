@@ -40,7 +40,7 @@ const Index = () => {
             </MaskedView>
 
             <Text style={styles.subtitle}>
-              Discover, Stream, and Dive into the World of Anime
+              Your anime watchlist tracker to track shows, organize your list, and discover new anime.
             </Text>
 
             <TouchableOpacity
