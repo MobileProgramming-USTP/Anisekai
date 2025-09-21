@@ -6,12 +6,12 @@ import { useState } from "react";
 import {
   ActivityIndicator,
   ImageBackground,
-  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View
 } from "react-native";
+import styles from "../styles/loginStyles";
 import WelcomeBanner from "../../components/WelcomeBanner";
 import { api } from "../../convex/_generated/api";
 import { useAuth } from "../context/AuthContext";
@@ -153,132 +153,5 @@ const Login = () => {
     </ImageBackground>
   );
 };
-
-const styles = StyleSheet.create({
-  background: { flex: 1, width: "100%", height: "100%" },
-  overlay: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 30,
-  },
-  container: {
-    width: "100%",
-    maxWidth: 400,
-    backgroundColor: "rgba(0,0,0,0.6)",
-    padding: 25,
-    borderRadius: 20,
-  },
-  title: {
-    fontSize: 36,
-    fontWeight: "bold",
-    color: "#fcbf49",
-    textAlign: "center",
-    marginBottom: 25,
-  },
-  inputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderWidth: 1.5,
-    borderColor: "#fcbf49",
-    borderRadius: 30,
-    marginVertical: 10,
-    width: "100%",
-    paddingHorizontal: 15,
-  },
-  icon: {
-    fontSize: 18,
-    color: "#fcbf49",
-    marginHorizontal: 5,
-  },
-  input: {
-    flex: 1,
-    padding: 12,
-    color: "#fff",
-  },
-  toggleButton: {
-    padding: 6,
-  },
-  toggleIcon: {
-    fontSize: 18,
-    color: "#fcbf49",
-    marginLeft: 4,
-  },
-  optionsRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    width: "100%",
-    marginTop: 5,
-    marginBottom: 10,
-  },
-  rememberMeContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  checkbox: {
-    width: 22,
-    height: 22,
-    borderRadius: 4,
-    borderWidth: 1.5,
-    borderColor: "#fcbf49",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "transparent",
-  },
-  checkboxChecked: {
-    backgroundColor: "#fcbf49",
-  },
-  checkboxIcon: {
-    color: "#000",
-    fontSize: 14,
-  },
-  rememberMeText: {
-    color: "#fff",
-    marginLeft: 8,
-  },
-  button: {
-    backgroundColor: "#fcbf49",
-    padding: 14,
-    borderRadius: 25,
-    alignItems: "center",
-    width: "100%",
-    marginVertical: 20,
-  },
-  buttonText: {
-    fontWeight: "bold",
-    color: "#000",
-    fontSize: 16,
-  },
-  footer: {
-    fontSize: 14,
-    color: "#fff",
-    textAlign: "center",
-  },
-  link: {
-    color: "#fcbf49",
-    fontWeight: "bold",
-  },
-  // 🔹 Banner styles
-  banner: {
-    position: "absolute",
-    top: 60,
-    left: "10%",
-    right: "10%",
-    padding: 15,
-    borderRadius: 20,
-    alignItems: "center",
-    backgroundColor: "rgba(252,191,73,0.9)",
-    shadowColor: "#000",
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 5,
-  },
-  bannerText: {
-    color: "#000",
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-});
 
 export default Login;

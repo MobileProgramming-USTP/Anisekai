@@ -5,13 +5,13 @@ import { useState } from "react";
 import {
   Alert,
   ImageBackground,
-  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
   ActivityIndicator,
 } from "react-native";
+import styles from "../styles/registerStyles";
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 
@@ -132,80 +132,6 @@ const Register = () => {
     </ImageBackground>
   );
 };
-
-const styles = StyleSheet.create({
-  background: { flex: 1, width: "100%", height: "100%" },
-  overlay: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 30,
-  },
-  container: {
-    width: "100%",
-    maxWidth: 400,
-    backgroundColor: "rgba(0,0,0,0.6)",
-    padding: 25,
-    borderRadius: 20,
-  },
-  title: {
-    fontSize: 36,
-    fontWeight: "bold",
-    color: "#fcbf49",
-    textAlign: "center",
-    marginBottom: 25,
-  },
-  inputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderWidth: 1.5,
-    borderColor: "#fcbf49",
-    borderRadius: 30,
-    marginVertical: 10,
-    width: "100%",
-    paddingHorizontal: 15,
-  },
-  icon: {
-    fontSize: 18,
-    color: "#fcbf49",
-    marginHorizontal: 5,
-  },
-  input: {
-    flex: 1,
-    padding: 12,
-    color: "#fff",
-  },
-  toggleButton: {
-    padding: 6,
-  },
-  toggleIcon: {
-    fontSize: 18,
-    color: "#fcbf49",
-    marginLeft: 4,
-  },
-  button: {
-    backgroundColor: "#fcbf49",
-    padding: 14,
-    borderRadius: 25,
-    alignItems: "center",
-    width: "100%",
-    marginVertical: 20,
-  },
-  buttonText: {
-    fontWeight: "bold",
-    color: "#000",
-    fontSize: 16,
-  },
-  footer: {
-    fontSize: 14,
-    color: "#fff",
-    textAlign: "center",
-  },
-  link: {
-    color: "#fcbf49",
-    fontWeight: "bold",
-  },
-});
 
 export default Register;
 

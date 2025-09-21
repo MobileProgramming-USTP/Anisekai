@@ -1,4 +1,5 @@
-import { ImageBackground, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+﻿import { ImageBackground, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import styles from "../styles/homeStyles";
 
 const Home = () => {
   return (
@@ -42,58 +43,3 @@ const Home = () => {
 
 export default Home;
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#111",
-  },
-  hero: {
-    height: 220,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  overlay: {
-    backgroundColor: "rgba(0,0,0,0.4)",
-    padding: 20,
-    borderRadius: 10,
-  },
-  heroText: {
-    fontSize: 26,
-    fontWeight: "bold",
-    color: "#fcbf49",
-    textAlign: "center",
-  },
-  heroSub: {
-    fontSize: 14,
-    color: "#fff",
-    marginTop: 5,
-    textAlign: "center",
-  },
-  section: {
-    padding: 20,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#fcbf49",
-    marginBottom: 15,
-  },
-  buttonRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 15,
-  },
-  featureButton: {
-    flex: 1,
-    backgroundColor: "#222",
-    padding: 15,
-    borderRadius: 10,
-    marginHorizontal: 5,
-    alignItems: "center",
-  },
-  featureText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#fff",
-  },
-});

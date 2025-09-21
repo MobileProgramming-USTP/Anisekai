@@ -1,16 +1,39 @@
-import { useEffect, useRef } from "react";
+﻿import { useEffect, useRef } from "react";
 import { Animated, Text } from "react-native";
 
 const WelcomeBanner = ({ username, onFinish }) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const finishRef = useRef(onFinish);
 
   useEffect(() => {
-    Animated.sequence([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
+    finishRef.current = onFinish;
+  }, [onFinish]);
+
+  useEffect(() => {
+    const animation = Animated.sequence([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 600,
+        useNativeDriver: true,
+      }),
       Animated.delay(2000),
-      Animated.timing(fadeAnim, { toValue: 0, duration: 600, useNativeDriver: true }),
-    ]).start(() => onFinish?.());
-  }, []);
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+    ]);
+
+    animation.start(() => {
+      if (finishRef.current) {
+        requestAnimationFrame(() => finishRef.current?.());
+      }
+    });
+
+    return () => {
+      animation.stop();
+    };
+  }, [fadeAnim]);
 
   return (
     <Animated.View
@@ -33,7 +56,7 @@ const WelcomeBanner = ({ username, onFinish }) => {
       ]}
     >
       <Text style={{ color: "#000", fontSize: 18, fontWeight: "bold" }}>
-        👋 Welcome back, {username}!
+        Welcome back, {username}!
       </Text>
     </Animated.View>
   );
