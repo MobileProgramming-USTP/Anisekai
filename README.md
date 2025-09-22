@@ -11,23 +11,7 @@ It contains two screens:
 ## 📸 Screenshots
 
 ### Figma Design
-<img width="1919" height="1015" alt="image" src="https://github.com/user-attachments/assets/c73c8c6e-2762-41d0-9878-8e3d0dae30c3" />
-
-
-### Login Page
-<img width="1919" height="1021" alt="image" src="https://github.com/user-attachments/assets/ddec3441-4282-4c32-bcc3-2d6286980830" />
-
-### Register Page
-<img width="1919" height="1021" alt="image" src="https://github.com/user-attachments/assets/5189d6c2-e606-4cc2-9fa0-dc963384f855" />
-
----
-
-## 🚀 Features
-- Clean and minimal UI
-- Built with **React Native**
-- Navigation with **Expo Router**
-- Custom input fields and buttons
-- Responsive design for mobile
+<img width="1897" height="1025" alt="image" src="https://github.com/user-attachments/assets/ef70216e-4c27-411e-903b-1049f8c3082a" />
 
 ---
 
