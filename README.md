@@ -52,8 +52,7 @@ react-login/
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/your-username/react-login.git
-cd react-login/frontend
+https://github.com/MobileProgramming-USTP/Anisekai.git
 ```
 
 2. Install dependencies:
@@ -77,13 +76,6 @@ npx expo start
 
 ---
 
-## 📌 Future Improvements
-- Add form validation
-- Integrate backend authentication (Node.js / Firebase)
-- Add password visibility toggle
-- Improve UI with animations
-
----
 
 ## 📄 License
 This project is licensed under the MIT License.
