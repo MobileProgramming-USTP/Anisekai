@@ -191,7 +191,8 @@ const ExploreScreen = () => {
   const [activeScope, setActiveScope] = useState(SCOPE_VALUES.ANIME);
   const [scopeMenuOpen, setScopeMenuOpen] = useState(false);
 
-  const [selectedAnime, setSelectedAnime] = useState(null);
+  const [selectedDetail, setSelectedDetail] = useState(null);
+  const [selectedDetailScope, setSelectedDetailScope] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState(null);
 
@@ -228,7 +229,8 @@ const ExploreScreen = () => {
     setActiveScope(nextScope);
     closeScopeMenu();
     setSectionsData({});
-    setSelectedAnime(null);
+    setSelectedDetail(null);
+    setSelectedDetailScope(null);
     setDetailError(null);
     setViewAllSection(null);
     setGenrePickerOpen(false);
@@ -250,7 +252,8 @@ const ExploreScreen = () => {
       clearTimeout(detailTimeoutRef.current);
       detailTimeoutRef.current = null;
     }
-    setSelectedAnime(null);
+    setSelectedDetail(null);
+    setSelectedDetailScope(null);
     setDetailLoading(false);
     setDetailError(null);
     setGenrePickerOpen(false);
@@ -281,7 +284,8 @@ const ExploreScreen = () => {
       }, 10000);
       setDetailLoading(true);
       setDetailError(null);
-      setSelectedAnime({ ...item });
+      setSelectedDetail({ ...item });
+      setSelectedDetailScope(SCOPE_VALUES.ANIME);
       setViewAllSection(null);
       setGenrePickerOpen(false);
 
@@ -290,7 +294,70 @@ const ExploreScreen = () => {
         signal: controller.signal,
       });
       if (requestIdRef.current === currentRequestId) {
-        setSelectedAnime(data.data);
+        setSelectedDetail(data.data);
+        setSelectedDetailScope(SCOPE_VALUES.ANIME);
+      }
+    } catch (e) {
+      if (requestIdRef.current === currentRequestId) {
+        const friendlyMessage =
+          e?.name === 'AbortError'
+            ? 'Request canceled. Please try again.'
+            : typeof e?.message === 'string' && e.message.includes('429')
+            ? 'Rate limit reached. Please try again shortly.'
+            : 'Failed to load details.';
+        setDetailError(friendlyMessage);
+        console.error(e);
+      }
+    } finally {
+      if (requestIdRef.current === currentRequestId) {
+        if (detailTimeoutRef.current) {
+          clearTimeout(detailTimeoutRef.current);
+          detailTimeoutRef.current = null;
+        }
+        if (detailAbortRef.current) {
+          detailAbortRef.current = null;
+        }
+        setDetailLoading(false);
+      }
+    }
+  };
+
+  const handleSelectManga = async (item) => {
+    if (!item?.mal_id) {
+      return;
+    }
+
+    try {
+      const currentRequestId = requestIdRef.current + 1;
+      requestIdRef.current = currentRequestId;
+      if (detailAbortRef.current) {
+        detailAbortRef.current.abort();
+      }
+      if (detailTimeoutRef.current) {
+        clearTimeout(detailTimeoutRef.current);
+        detailTimeoutRef.current = null;
+      }
+      const controller = new AbortController();
+      detailAbortRef.current = controller;
+      detailTimeoutRef.current = setTimeout(() => {
+        if (detailAbortRef.current === controller) {
+          controller.abort();
+        }
+      }, 10000);
+      setDetailLoading(true);
+      setDetailError(null);
+      setSelectedDetail({ ...item });
+      setSelectedDetailScope(SCOPE_VALUES.MANGA);
+      setViewAllSection(null);
+      setGenrePickerOpen(false);
+
+      const data = await fetchJsonWithRetry(`${JIKAN_API_URL}/manga/${item.mal_id}/full`, {
+        retries: 3,
+        signal: controller.signal,
+      });
+      if (requestIdRef.current === currentRequestId) {
+        setSelectedDetail(data.data);
+        setSelectedDetailScope(SCOPE_VALUES.MANGA);
       }
     } catch (e) {
       if (requestIdRef.current === currentRequestId) {
@@ -318,7 +385,7 @@ const ExploreScreen = () => {
   };
 
   useEffect(() => {
-    if (!selectedAnime && !detailLoading && !detailError) {
+    if (!selectedDetail && !detailLoading && !detailError) {
       return;
     }
 
@@ -330,10 +397,10 @@ const ExploreScreen = () => {
     return () => {
       subscription.remove();
     };
-  }, [selectedAnime, detailLoading, detailError]);
+  }, [selectedDetail, selectedDetailScope, detailLoading, detailError]);
 
   useEffect(() => {
-    if (!viewAllSection || selectedAnime) {
+    if (!viewAllSection || selectedDetail) {
       return undefined;
     }
 
@@ -345,7 +412,7 @@ const ExploreScreen = () => {
     return () => {
       subscription.remove();
     };
-  }, [viewAllSection, selectedAnime]);
+  }, [viewAllSection, selectedDetail]);
 
   useEffect(() => {
     let isCancelled = false;
@@ -608,7 +675,12 @@ const ExploreScreen = () => {
         : useGrid
         ? 'grid'
         : 'carousel';
-    const cardOnSelect = activeScope === SCOPE_VALUES.ANIME ? handleSelectAnime : undefined;
+    const cardOnSelect =
+      activeScope === SCOPE_VALUES.ANIME
+        ? handleSelectAnime
+        : activeScope === SCOPE_VALUES.MANGA
+        ? handleSelectManga
+        : undefined;
 
     const keyExtractor = (item, index) => getItemKey(item, index, key);
 
@@ -651,37 +723,51 @@ const ExploreScreen = () => {
     );
   };
 
-  if (selectedAnime) {
+  if (selectedDetail) {
+    const isAnimeDetail = selectedDetailScope === SCOPE_VALUES.ANIME;
+    const isMangaDetail = selectedDetailScope === SCOPE_VALUES.MANGA;
+
     const coverImage =
-      selectedAnime.images?.jpg?.large_image_url ||
-      selectedAnime.images?.webp?.large_image_url ||
-      selectedAnime.images?.jpg?.image_url;
-    const studiosList =
-      selectedAnime.studios?.map((studio) => studio.name).filter(Boolean) ?? [];
-    const studiosText = studiosList.join(', ');
-    const statusLabel = selectedAnime.status || 'Status Unknown';
-    const episodesLabel =
-      typeof selectedAnime.episodes === 'number'
-        ? `${selectedAnime.episodes} episodes`
-        : 'N/A episodes';
+      selectedDetail.images?.jpg?.large_image_url ||
+      selectedDetail.images?.webp?.large_image_url ||
+      selectedDetail.images?.jpg?.image_url;
+
+    const statusLabel = selectedDetail.status || 'Status Unknown';
+    const statusIcon = isMangaDetail ? 'time-outline' : 'tv-outline';
     const scoreLabel =
-      typeof selectedAnime.score === 'number'
-        ? `${selectedAnime.score.toFixed(1)} / 10`
+      typeof selectedDetail.score === 'number'
+        ? `${selectedDetail.score.toFixed(1)} / 10`
         : 'Not rated';
-    const synopsis = selectedAnime.synopsis?.trim() || 'No summary available.';
-    const genres = Array.isArray(selectedAnime.genres) ? selectedAnime.genres : [];
-    const isInLibrary = selectedAnime.mal_id
-      ? Boolean(libraryEntries[selectedAnime.mal_id])
+    const synopsis = selectedDetail.synopsis?.trim() || 'No summary available.';
+    const genres = Array.isArray(selectedDetail.genres) ? selectedDetail.genres : [];
+    const isInLibrary = selectedDetail.mal_id
+      ? Boolean(libraryEntries[selectedDetail.mal_id])
       : false;
 
+    const lengthLabel = isAnimeDetail
+      ? typeof selectedDetail.episodes === 'number'
+        ? `${selectedDetail.episodes} episodes`
+        : 'N/A episodes'
+      : typeof selectedDetail.chapters === 'number'
+      ? `${selectedDetail.chapters} chapters`
+      : 'N/A chapters';
+
+    const creatorsList = isAnimeDetail
+      ? selectedDetail.studios?.map((studio) => studio.name).filter(Boolean) ?? []
+      : selectedDetail.authors?.map((author) => author.name).filter(Boolean) ?? [];
+    const creatorsText = creatorsList.join(', ');
+
+    const lengthIcon = isAnimeDetail ? 'albums-outline' : 'book-outline';
+    const creatorsIcon = isAnimeDetail ? 'business-outline' : 'person-outline';
+
     const handleToggleLibrary = () => {
-      if (!selectedAnime.mal_id) return;
+      if (!selectedDetail.mal_id) return;
       setLibraryEntries((prev) => {
         const next = { ...prev };
-        if (next[selectedAnime.mal_id]) {
-          delete next[selectedAnime.mal_id];
+        if (next[selectedDetail.mal_id]) {
+          delete next[selectedDetail.mal_id];
         } else {
-          next[selectedAnime.mal_id] = true;
+          next[selectedDetail.mal_id] = true;
         }
         return next;
       });
@@ -710,23 +796,23 @@ const ExploreScreen = () => {
             )}
           </View>
           <View style={styles.detailHeaderInfo}>
-            <Text style={styles.detailTitle}>{selectedAnime.title}</Text>
+            <Text style={styles.detailTitle}>{selectedDetail.title}</Text>
 
             <View style={styles.detailMetaRow}>
-              <Ionicons name="tv-outline" size={18} color="#A5B2C2" />
+              <Ionicons name={statusIcon} size={18} color="#A5B2C2" />
               <Text style={styles.detailMetaText}>{statusLabel}</Text>
             </View>
 
-            {studiosText ? (
+            {creatorsText ? (
               <View style={styles.detailMetaRow}>
-                <Ionicons name="business-outline" size={18} color="#A5B2C2" />
-                <Text style={styles.detailMetaText}>{studiosText}</Text>
+                <Ionicons name={creatorsIcon} size={18} color="#A5B2C2" />
+                <Text style={styles.detailMetaText}>{creatorsText}</Text>
               </View>
             ) : null}
 
             <View style={styles.detailMetaRow}>
-              <Ionicons name="albums-outline" size={18} color="#A5B2C2" />
-              <Text style={styles.detailMetaText}>{episodesLabel}</Text>
+              <Ionicons name={lengthIcon} size={18} color="#A5B2C2" />
+              <Text style={styles.detailMetaText}>{lengthLabel}</Text>
             </View>
 
             <View style={styles.detailMetaRow}>
@@ -954,7 +1040,13 @@ const ExploreScreen = () => {
               renderItem={({ item }) => (
                 <MediaCard
                   item={item}
-                  onSelect={activeScope === SCOPE_VALUES.ANIME ? handleSelectAnime : undefined}
+                  onSelect={
+                    activeScope === SCOPE_VALUES.ANIME
+                      ? handleSelectAnime
+                      : activeScope === SCOPE_VALUES.MANGA
+                      ? handleSelectManga
+                      : undefined
+                  }
                   variant={activeScope === SCOPE_VALUES.USERS ? 'user' : 'grid'}
                 />
               )}
