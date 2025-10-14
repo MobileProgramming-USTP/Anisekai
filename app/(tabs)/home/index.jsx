@@ -1,12 +1,12 @@
 ﻿import { ImageBackground, ScrollView, Text, TouchableOpacity, View } from "react-native";
-import styles from "../../styles/homeStyles";
+import styles from "../../../styles/homeStyles";
 
 const Home = () => {
   return (
     <ScrollView style={styles.container}>
       {/* Hero Banner */}
       <ImageBackground
-        source={require("../../assets/images/anime-collage.png")}
+        source={require("../../../assets/images/anime-collage.png")}
         style={styles.hero}
         imageStyle={{ opacity: 0.85 }}
       >

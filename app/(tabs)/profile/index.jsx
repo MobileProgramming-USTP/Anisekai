@@ -1,8 +1,8 @@
 import { useRouter } from "expo-router";
 import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
 
-import styles from "../../styles/profileStyles";
-import { useAuth } from "../context/AuthContext";
+import styles from "../../../styles/profileStyles";
+import { useAuth } from "../../context/AuthContext";
 
 const Profile = () => {
   const router = useRouter();
