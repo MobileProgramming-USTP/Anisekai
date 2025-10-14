@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import styles from "./styles/indexStyles";
+import styles from "../styles/indexStyles";
 
 const Index = () => {
   const router = useRouter();

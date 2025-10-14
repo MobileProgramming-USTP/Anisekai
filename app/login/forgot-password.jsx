@@ -9,7 +9,7 @@ import {
   TextInput,
   View,
 } from "react-native";
-import styles from "../styles/forgotPasswordStyles";
+import styles from "../../styles/forgotPasswordStyles";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");

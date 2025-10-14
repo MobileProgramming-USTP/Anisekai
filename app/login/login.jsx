@@ -13,8 +13,8 @@ import {
 } from "react-native";
 import WelcomeBanner from "../../components/WelcomeBanner";
 import { api } from "../../convex/_generated/api";
+import styles from "../../styles/loginStyles";
 import { useAuth } from "../context/AuthContext";
-import styles from "../styles/loginStyles";
 
 const Login = () => {
   const router = useRouter();
@@ -145,7 +145,7 @@ const Login = () => {
           </Text>
         </View>
 
-        {/* 🔹 Show Welcome Banner */}
+        {/* 🔹 Show Welcome Banner sa taas after login */}
         {showWelcome && (
           <WelcomeBanner username={loggedUser} onFinish={() => setShowWelcome(false)} />
         )}

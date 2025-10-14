@@ -1,5 +1,5 @@
 ﻿import { ImageBackground, ScrollView, Text, TouchableOpacity, View } from "react-native";
-import styles from "../styles/homeStyles";
+import styles from "../../styles/homeStyles";
 
 const Home = () => {
   return (

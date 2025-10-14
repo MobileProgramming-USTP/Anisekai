@@ -1,19 +1,19 @@
 ﻿import { FontAwesome } from "@expo/vector-icons";
+import { useMutation } from "convex/react";
 import { LinearGradient } from "expo-linear-gradient";
 import { Link, useRouter } from "expo-router";
 import { useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   ImageBackground,
   Text,
   TextInput,
   TouchableOpacity,
   View,
-  ActivityIndicator,
 } from "react-native";
-import styles from "../styles/registerStyles";
-import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
+import styles from "../../styles/registerStyles";
 
 const Register = () => {
   const router = useRouter();
