@@ -661,7 +661,13 @@ const ExploreScreen = () => {
     const studiosText = studiosList.join(', ');
     const statusLabel = selectedAnime.status || 'Status Unknown';
     const episodesLabel =
-      typeof selectedAnime.episodes === 'number' ? selectedAnime.episodes : 'N/A';
+      typeof selectedAnime.episodes === 'number'
+        ? `${selectedAnime.episodes} episodes`
+        : 'N/A episodes';
+    const scoreLabel =
+      typeof selectedAnime.score === 'number'
+        ? `${selectedAnime.score.toFixed(1)} / 10`
+        : 'Not rated';
     const synopsis = selectedAnime.synopsis?.trim() || 'No summary available.';
     const genres = Array.isArray(selectedAnime.genres) ? selectedAnime.genres : [];
     const isInLibrary = selectedAnime.mal_id
@@ -720,7 +726,12 @@ const ExploreScreen = () => {
 
             <View style={styles.detailMetaRow}>
               <Ionicons name="albums-outline" size={18} color="#A5B2C2" />
-              <Text style={styles.detailMetaText}>Episodes: {episodesLabel}</Text>
+              <Text style={styles.detailMetaText}>{episodesLabel}</Text>
+            </View>
+
+            <View style={styles.detailMetaRow}>
+              <Ionicons name="star-outline" size={18} color="#A5B2C2" />
+              <Text style={styles.detailMetaText}>{scoreLabel}</Text>
             </View>
 
             <Pressable style={styles.detailMetaRow} onPress={handleToggleLibrary} hitSlop={8}>
