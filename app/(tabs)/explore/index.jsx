@@ -12,15 +12,12 @@ import {
 } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
+import AnimeSections, { ANIME_SECTION_CONFIG } from '../../../components/explore/AnimeSections';
+import MangaSections, { MANGA_SECTION_CONFIG } from '../../../components/explore/MangaSections';
+import CharacterSections, { CHARACTER_SECTION_CONFIG } from '../../../components/explore/CharacterSections';
+import UserSections, { USER_SECTION_CONFIG } from '../../../components/explore/UserSections';
 
 const JIKAN_API_URL = 'https://api.jikan.moe/v4';
-
-const SECTION_KEYS = {
-  TRENDING: 'TRENDING',
-  SEASON: 'SEASON',
-  UPCOMING: 'UPCOMING',
-  ALL_TIME: 'ALL_TIME',
-};
 
 const SCOPE_VALUES = {
   ANIME: 'anime',
@@ -37,94 +34,46 @@ const SCOPE_OPTIONS = [
 ];
 
 const SECTION_CONFIG = {
-  [SCOPE_VALUES.ANIME]: [
-    {
-      key: SECTION_KEYS.TRENDING,
-      title: 'TRENDING NOW',
-      endpoint: '/top/anime?filter=airing&limit=24',
-      previewVariant: 'carousel',
-      previewCount: 10,
-    },
-    {
-      key: SECTION_KEYS.SEASON,
-      title: 'POPULAR THIS SEASON',
-      endpoint: '/seasons/now?limit=24',
-      previewVariant: 'carousel',
-      previewCount: 10,
-    },
-    {
-      key: SECTION_KEYS.UPCOMING,
-      title: 'UPCOMING ANIMES',
-      endpoint: '/seasons/upcoming?limit=24',
-      previewVariant: 'carousel',
-      previewCount: 10,
-    },
-    {
-      key: SECTION_KEYS.ALL_TIME,
-      title: 'ALL TIME POPULAR',
-      endpoint: '/top/anime?limit=24',
-      previewVariant: 'carousel',
-      previewCount: 10,
-    },
-  ],
-  [SCOPE_VALUES.MANGA]: [
-    {
-      key: 'MANGA_TRENDING',
-      title: 'TRENDING MANGA',
-      endpoint: '/top/manga?filter=publishing&limit=24',
-      previewVariant: 'carousel',
-      previewCount: 10,
-    },
-    {
-      key: 'MANGA_UPCOMING',
-      title: 'UPCOMING MANGA',
-      endpoint: '/top/manga?filter=upcoming&limit=24',
-      previewVariant: 'carousel',
-      previewCount: 10,
-    },
-    {
-      key: 'MANGA_ALL_TIME',
-      title: 'ALL TIME POPULAR MANGA',
-      endpoint: '/top/manga?limit=24',
-      previewVariant: 'carousel',
-      previewCount: 10,
-    },
-  ],
-  [SCOPE_VALUES.CHARACTERS]: [
-    {
-      key: 'CHARACTER_TOP',
-      title: 'TOP CHARACTERS',
-      endpoint: '/top/characters?limit=24',
-      previewVariant: 'grid',
-      previewCount: 8,
-    },
-    {
-      key: 'CHARACTER_FAVORITES',
-      title: 'FAN FAVORITES',
-      endpoint: '/top/characters?limit=24&page=2',
-      previewVariant: 'grid',
-      previewCount: 8,
-    },
-  ],
-  [SCOPE_VALUES.USERS]: [
-    {
-      key: 'USERS_RECENT',
-      title: 'RECENTLY JOINED USERS',
-      endpoint: '/users?order_by=joined&sort=desc&limit=24',
-      previewVariant: 'grid',
-      previewCount: 8,
-    },
-    {
-      key: 'USERS_ACTIVE',
-      title: 'RECENTLY ONLINE',
-      endpoint: '/users?order_by=last_online&sort=desc&limit=24',
-      previewVariant: 'grid',
-      previewCount: 8,
-    },
-  ],
+  [SCOPE_VALUES.ANIME]: ANIME_SECTION_CONFIG,
+  [SCOPE_VALUES.MANGA]: MANGA_SECTION_CONFIG,
+  [SCOPE_VALUES.CHARACTERS]: CHARACTER_SECTION_CONFIG,
+  [SCOPE_VALUES.USERS]: USER_SECTION_CONFIG,
+};
+
+const SCOPE_SECTION_COMPONENTS = {
+  [SCOPE_VALUES.ANIME]: AnimeSections,
+  [SCOPE_VALUES.MANGA]: MangaSections,
+  [SCOPE_VALUES.CHARACTERS]: CharacterSections,
+  [SCOPE_VALUES.USERS]: UserSections,
 };
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const resolveSectionEndpoint = (section, page) => {
+  const { endpoint } = section;
+  if (typeof endpoint === 'function') {
+    return endpoint(page);
+  }
+
+  if (typeof endpoint !== 'string' || endpoint.length === 0) {
+    return null;
+  }
+
+  if (endpoint.includes('{{page}}')) {
+    return endpoint.replace('{{page}}', page);
+  }
+
+  if (page === 1) {
+    return endpoint;
+  }
+
+  if (/[?&]page=\d+/.test(endpoint)) {
+    return endpoint.replace(/page=\d+/i, `page=${page}`);
+  }
+
+  const separator = endpoint.includes('?') ? '&' : '?';
+  return `${endpoint}${separator}page=${page}`;
+};
 
 const fetchJsonWithRetry = async (
   url,
@@ -189,8 +138,18 @@ const MediaCard = ({ item, onSelect, variant = 'carousel' }) => {
     item?.images?.jpg?.small_image_url ||
     item?.image_url ||
     item?.avatar_url;
-  const cardStyle = variant === 'grid' ? styles.gridCard : styles.card;
-  const imageStyle = variant === 'grid' ? styles.gridCardImage : styles.cardImage;
+  const cardStyle =
+    variant === 'grid'
+      ? styles.gridCard
+      : variant === 'user'
+      ? styles.userCard
+      : styles.card;
+  const imageStyle =
+    variant === 'grid'
+      ? styles.gridCardImage
+      : variant === 'user'
+      ? styles.userCardImage
+      : styles.cardImage;
   const handlePress = () => {
     if (onSelect) {
       onSelect(item);
@@ -394,11 +353,35 @@ const ExploreScreen = () => {
 
         for (let index = 0; index < sections.length; index += 1) {
           const section = sections[index];
-          const response = await fetchJsonWithRetry(
-            `${JIKAN_API_URL}${section.endpoint}`,
-            { retries: 3 }
-          );
-          nextData[section.key] = response?.data ?? [];
+          const totalPages = Math.max(1, Number(section.pages) || 1);
+          let aggregated = [];
+
+          for (let page = 1; page <= totalPages; page += 1) {
+            const endpointPath = resolveSectionEndpoint(section, page);
+            if (!endpointPath) {
+              continue;
+            }
+
+            const response = await fetchJsonWithRetry(
+              `${JIKAN_API_URL}${endpointPath}`,
+              { retries: 3 }
+            );
+            const pageData = Array.isArray(response?.data) ? response.data : [];
+
+            aggregated =
+              page === 1 ? pageData : aggregated.concat(pageData);
+
+            if (page < totalPages) {
+              await delay(120);
+            }
+          }
+
+          const maxItems = Number(section.maxItems);
+          if (Number.isFinite(maxItems) && maxItems > 0) {
+            aggregated = aggregated.slice(0, maxItems);
+          }
+
+          nextData[section.key] = aggregated;
           if (index < sections.length - 1) {
             await delay(150);
           }
@@ -494,6 +477,8 @@ const ExploreScreen = () => {
     [activeScope]
   );
 
+  const ScopeSectionComponent = SCOPE_SECTION_COMPONENTS[activeScope] ?? null;
+
   const genreOptions = useMemo(() => {
     if (activeScope !== SCOPE_VALUES.ANIME) {
       return [];
@@ -579,7 +564,12 @@ const ExploreScreen = () => {
     const visibleCount = previewCount ?? (useGrid ? 6 : 10);
     const listData = showingAll ? data : data.slice(0, visibleCount);
     const listKey = useGrid ? `grid-${key}` : `carousel-${key}`;
-    const cardVariant = useGrid ? 'grid' : 'carousel';
+    const cardVariant =
+      activeScope === SCOPE_VALUES.USERS
+        ? 'user'
+        : useGrid
+        ? 'grid'
+        : 'carousel';
     const cardOnSelect = activeScope === SCOPE_VALUES.ANIME ? handleSelectAnime : undefined;
 
     const keyExtractor = (item, index) => getItemKey(item, index, key);
@@ -757,13 +747,9 @@ const ExploreScreen = () => {
       style={styles.container}
       contentContainerStyle={styles.scrollContent}
       showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled"
       onScrollBeginDrag={closeScopeMenu}
       onMomentumScrollBegin={closeScopeMenu}
-      onTouchStart={() => {
-        if (scopeMenuOpen) {
-          closeScopeMenu();
-        }
-      }}
     >
       <View style={styles.headerRow}>
         <Text style={styles.headerTitle}>Explore</Text>
@@ -920,7 +906,7 @@ const ExploreScreen = () => {
                 <MediaCard
                   item={item}
                   onSelect={activeScope === SCOPE_VALUES.ANIME ? handleSelectAnime : undefined}
-                  variant="grid"
+                  variant={activeScope === SCOPE_VALUES.USERS ? 'user' : 'grid'}
                 />
               )}
             />
@@ -928,7 +914,11 @@ const ExploreScreen = () => {
         </View>
       )}
 
-      {sectionsConfig.map((section) => renderSection(section))}
+      {ScopeSectionComponent ? (
+        <ScopeSectionComponent renderSection={renderSection} />
+      ) : (
+        sectionsConfig.map((section) => renderSection(section))
+      )}
     </ScrollView>
   );
 };
@@ -1213,6 +1203,17 @@ const styles = StyleSheet.create({
   gridCardImage: {
     width: '100%',
     height: 220,
+    borderRadius: 12,
+    marginBottom: 12,
+    backgroundColor: '#2a2a2a',
+  },
+  userCard: {
+    flex: 0.48,
+    marginBottom: 16,
+  },
+  userCardImage: {
+    width: '100%',
+    aspectRatio: 1,
     borderRadius: 12,
     marginBottom: 12,
     backgroundColor: '#2a2a2a',
