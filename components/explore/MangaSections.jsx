@@ -13,6 +13,7 @@ export const MANGA_SECTION_CONFIG = [
     endpoint: '/top/manga?filter=publishing&limit=24',
     previewVariant: 'carousel',
     previewCount: 10,
+    viewAllLimit: 25,
   },
   {
     key: MANGA_SECTION_KEYS.ALL_TIME,
@@ -20,6 +21,7 @@ export const MANGA_SECTION_CONFIG = [
     endpoint: '/top/manga?limit=24',
     previewVariant: 'carousel',
     previewCount: 10,
+    viewAllLimit: 25,
   },
   {
     key: MANGA_SECTION_KEYS.TOP_100,
@@ -29,15 +31,20 @@ export const MANGA_SECTION_CONFIG = [
     maxItems: 100,
     previewVariant: 'carousel',
     previewCount: 10,
+    viewAllLimit: 100,
   },
 ];
 
-const MangaSections = memo(function MangaSections({ renderSection }) {
+const MangaSections = memo(function MangaSections({ renderSection, viewAllKey = null }) {
   if (typeof renderSection !== 'function') {
     return null;
   }
 
-  return MANGA_SECTION_CONFIG.map((section) => renderSection(section));
+  const sections = viewAllKey
+    ? MANGA_SECTION_CONFIG.filter((section) => section.key === viewAllKey)
+    : MANGA_SECTION_CONFIG;
+
+  return sections.map((section) => renderSection(section));
 });
 
 export default MangaSections;

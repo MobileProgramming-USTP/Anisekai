@@ -333,6 +333,21 @@ const ExploreScreen = () => {
   }, [selectedAnime, detailLoading, detailError]);
 
   useEffect(() => {
+    if (!viewAllSection || selectedAnime) {
+      return undefined;
+    }
+
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+      setViewAllSection(null);
+      return true;
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [viewAllSection, selectedAnime]);
+
+  useEffect(() => {
     let isCancelled = false;
     const sections = SECTION_CONFIG[activeScope] ?? [];
 
@@ -477,6 +492,11 @@ const ExploreScreen = () => {
     [activeScope]
   );
 
+  const activeViewAllConfig = useMemo(
+    () => sectionsConfig.find((section) => section.key === viewAllSection) ?? null,
+    [sectionsConfig, viewAllSection]
+  );
+
   const ScopeSectionComponent = SCOPE_SECTION_COMPONENTS[activeScope] ?? null;
 
   const genreOptions = useMemo(() => {
@@ -552,7 +572,19 @@ const ExploreScreen = () => {
     }
   }, [viewAllSection, filteredSections]);
 
-  const renderSection = ({ key, title, previewVariant = 'carousel', previewCount = 10 }) => {
+  const renderSection = (section) => {
+    if (!section) {
+      return null;
+    }
+
+    const {
+      key,
+      title,
+      previewVariant = 'carousel',
+      previewCount = 10,
+      viewAllLimit,
+    } = section;
+
     const data = filteredSections?.[key];
 
     if (!Array.isArray(data) || data.length === 0) {
@@ -560,9 +592,13 @@ const ExploreScreen = () => {
     }
 
     const showingAll = viewAllSection === key;
+    const previewVisibleCount = previewCount ?? (previewVariant === 'grid' ? 6 : 10);
+    const effectiveViewAllLimit = Math.min(viewAllLimit ?? 25, data.length);
     const useGrid = showingAll || previewVariant === 'grid';
-    const visibleCount = previewCount ?? (useGrid ? 6 : 10);
-    const listData = showingAll ? data : data.slice(0, visibleCount);
+    const visibleCount = showingAll
+      ? effectiveViewAllLimit
+      : Math.min(previewVisibleCount, data.length);
+    const listData = data.slice(0, visibleCount);
     const listKey = useGrid ? `grid-${key}` : `carousel-${key}`;
     const cardVariant =
       activeScope === SCOPE_VALUES.USERS
@@ -583,7 +619,7 @@ const ExploreScreen = () => {
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>{title}</Text>
           <Pressable onPress={() => handleToggleViewAll(key)} hitSlop={8}>
-            <Text style={styles.viewAllText}>{showingAll ? 'Show Less' : 'View All'}</Text>
+            <Text style={styles.viewAllText}>{showingAll ? 'Back' : 'View All'}</Text>
           </Pressable>
         </View>
 
@@ -915,9 +951,14 @@ const ExploreScreen = () => {
       )}
 
       {ScopeSectionComponent ? (
-        <ScopeSectionComponent renderSection={renderSection} />
+        <ScopeSectionComponent
+          renderSection={renderSection}
+          viewAllKey={activeViewAllConfig?.key ?? null}
+        />
       ) : (
-        sectionsConfig.map((section) => renderSection(section))
+        (activeViewAllConfig ? [activeViewAllConfig] : sectionsConfig).map((section) =>
+          renderSection(section)
+        )
       )}
     </ScrollView>
   );

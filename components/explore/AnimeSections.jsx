@@ -14,6 +14,7 @@ export const ANIME_SECTION_CONFIG = [
     endpoint: '/top/anime?filter=airing&limit=24',
     previewVariant: 'carousel',
     previewCount: 10,
+    viewAllLimit: 25,
   },
   {
     key: ANIME_SECTION_KEYS.SEASON,
@@ -21,6 +22,7 @@ export const ANIME_SECTION_CONFIG = [
     endpoint: '/seasons/now?limit=24',
     previewVariant: 'carousel',
     previewCount: 10,
+    viewAllLimit: 25,
   },
   {
     key: ANIME_SECTION_KEYS.UPCOMING,
@@ -28,6 +30,7 @@ export const ANIME_SECTION_CONFIG = [
     endpoint: '/seasons/upcoming?limit=24',
     previewVariant: 'carousel',
     previewCount: 10,
+    viewAllLimit: 25,
   },
   {
     key: ANIME_SECTION_KEYS.ALL_TIME,
@@ -35,15 +38,20 @@ export const ANIME_SECTION_CONFIG = [
     endpoint: '/top/anime?limit=24',
     previewVariant: 'carousel',
     previewCount: 10,
+    viewAllLimit: 25,
   },
 ];
 
-const AnimeSections = memo(function AnimeSections({ renderSection }) {
+const AnimeSections = memo(function AnimeSections({ renderSection, viewAllKey = null }) {
   if (typeof renderSection !== 'function') {
     return null;
   }
 
-  return ANIME_SECTION_CONFIG.map((section) => renderSection(section));
+  const sections = viewAllKey
+    ? ANIME_SECTION_CONFIG.filter((section) => section.key === viewAllKey)
+    : ANIME_SECTION_CONFIG;
+
+  return sections.map((section) => renderSection(section));
 });
 
 export default AnimeSections;
