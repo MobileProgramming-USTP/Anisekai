@@ -237,6 +237,7 @@ const ExploreScreen = () => {
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState(null);
+  const [libraryEntries, setLibraryEntries] = useState({});
 
   const activeScopeLabel = useMemo(
     () => SCOPE_OPTIONS.find((option) => option.value === activeScope)?.label ?? 'Anime',
@@ -580,9 +581,34 @@ const ExploreScreen = () => {
   }
 
   if (selectedAnime) {
-    const bannerImage =
-      selectedAnime.trailer?.images?.maximum_image_url || selectedAnime.images?.jpg?.large_image_url;
-    const genres = selectedAnime.genres?.map((g) => g.name).join(', ') || 'N/A';
+    const coverImage =
+      selectedAnime.images?.jpg?.large_image_url ||
+      selectedAnime.images?.webp?.large_image_url ||
+      selectedAnime.images?.jpg?.image_url;
+    const studiosList =
+      selectedAnime.studios?.map((studio) => studio.name).filter(Boolean) ?? [];
+    const studiosText = studiosList.join(', ');
+    const statusLabel = selectedAnime.status || 'Status Unknown';
+    const episodesLabel =
+      typeof selectedAnime.episodes === 'number' ? selectedAnime.episodes : 'N/A';
+    const synopsis = selectedAnime.synopsis?.trim() || 'No summary available.';
+    const genres = Array.isArray(selectedAnime.genres) ? selectedAnime.genres : [];
+    const isInLibrary = selectedAnime.mal_id
+      ? Boolean(libraryEntries[selectedAnime.mal_id])
+      : false;
+
+    const handleToggleLibrary = () => {
+      if (!selectedAnime.mal_id) return;
+      setLibraryEntries((prev) => {
+        const next = { ...prev };
+        if (next[selectedAnime.mal_id]) {
+          delete next[selectedAnime.mal_id];
+        } else {
+          next[selectedAnime.mal_id] = true;
+        }
+        return next;
+      });
+    };
 
     return (
       <ScrollView
@@ -594,13 +620,69 @@ const ExploreScreen = () => {
           <Ionicons name="chevron-back" size={18} color="#A5B2C2" />
           <Text style={styles.backButtonText}>Back to Explore</Text>
         </Pressable>
-        <Image source={{ uri: bannerImage }} style={styles.detailBannerImage} />
-        <View style={styles.detailContent}>
-          <Text style={styles.detailTitle}>{selectedAnime.title}</Text>
-          <Text style={styles.detailMetaText}>Status: {selectedAnime.status}</Text>
-          <Text style={styles.detailMetaText}>Episodes: {selectedAnime.episodes || 'N/A'}</Text>
-          <Text style={styles.detailGenres}>Genres: {genres}</Text>
-          <Text style={styles.detailDescription}>{selectedAnime.synopsis}</Text>
+
+        <View style={styles.detailCard}>
+          <View style={styles.detailCoverWrapper}>
+            {coverImage ? (
+              <Image source={{ uri: coverImage }} style={styles.detailCoverImage} />
+            ) : (
+              <View style={[styles.detailCoverImage, styles.cardImageFallback]}>
+                <Ionicons name="image-outline" size={28} color="#6f7a89" />
+              </View>
+            )}
+          </View>
+          <View style={styles.detailHeaderInfo}>
+            <Text style={styles.detailTitle}>{selectedAnime.title}</Text>
+
+            <View style={styles.detailMetaRow}>
+              <Ionicons name="tv-outline" size={18} color="#A5B2C2" />
+              <Text style={styles.detailMetaText}>{statusLabel}</Text>
+            </View>
+
+            {studiosText ? (
+              <View style={styles.detailMetaRow}>
+                <Ionicons name="business-outline" size={18} color="#A5B2C2" />
+                <Text style={styles.detailMetaText}>{studiosText}</Text>
+              </View>
+            ) : null}
+
+            <View style={styles.detailMetaRow}>
+              <Ionicons name="albums-outline" size={18} color="#A5B2C2" />
+              <Text style={styles.detailMetaText}>Episodes: {episodesLabel}</Text>
+            </View>
+
+            <Pressable style={styles.detailMetaRow} onPress={handleToggleLibrary} hitSlop={8}>
+              <Ionicons
+                name={isInLibrary ? 'heart' : 'heart-outline'}
+                size={20}
+                color={isInLibrary ? '#f55f5f' : '#A5B2C2'}
+              />
+              <Text style={styles.detailMetaText}>
+                {isInLibrary ? 'Added to Library' : 'Add to Library'}
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+
+        {genres.length > 0 && (
+          <View style={styles.detailGenresSection}>
+            <Text style={styles.detailSectionHeading}>Genres</Text>
+            <View style={styles.detailGenresWrap}>
+              {genres.map((genre, index) => (
+                <View
+                  key={getItemKey(genre, index, 'genre-detail')}
+                  style={styles.detailGenreChip}
+                >
+                  <Text style={styles.detailGenreChipText}>{genre?.name || 'Unknown'}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
+
+        <View style={styles.detailSummarySection}>
+          <Text style={styles.detailSectionHeading}>Summary</Text>
+          <Text style={styles.detailSummaryText}>{synopsis}</Text>
         </View>
       </ScrollView>
     );
@@ -814,7 +896,79 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   detailScrollContent: {
-    paddingBottom: 40,
+    paddingBottom: 60,
+    paddingHorizontal: 20,
+  },
+  detailCard: {
+    marginTop: 24,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  detailCoverWrapper: {
+    width: 140,
+    marginRight: 20,
+  },
+  detailCoverImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: 12,
+    backgroundColor: '#2a2a2a',
+  },
+  detailHeaderInfo: {
+    flex: 1,
+  },
+  detailTitle: {
+    color: '#E7EDF5',
+    fontSize: 24,
+    fontWeight: '800',
+    marginBottom: 12,
+  },
+  detailMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  detailMetaText: {
+    color: '#A5B2C2',
+    fontSize: 15,
+    marginLeft: 8,
+    flexShrink: 1,
+  },
+  detailGenresSection: {
+    marginTop: 28,
+  },
+  detailSectionHeading: {
+    color: '#A5B2C2',
+    fontSize: 14,
+    fontWeight: '700',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    marginBottom: 14,
+  },
+  detailGenresWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  detailGenreChip: {
+    backgroundColor: '#1E2A3A',
+    borderRadius: 18,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginRight: 10,
+    marginBottom: 10,
+  },
+  detailGenreChipText: {
+    color: '#E7EDF5',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  detailSummarySection: {
+    marginTop: 28,
+  },
+  detailSummaryText: {
+    color: '#E7EDF5',
+    fontSize: 15,
+    lineHeight: 22,
   },
   headerRow: {
     flexDirection: 'row',
@@ -1039,7 +1193,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 10,
     alignSelf: 'flex-start',
-    marginHorizontal: 20,
+    marginHorizontal: 0,
     marginTop: 40,
     marginBottom: 16,
   },
@@ -1047,36 +1201,5 @@ const styles = StyleSheet.create({
     color: '#A5B2C2',
     fontWeight: '700',
     marginLeft: 6,
-  },
-  detailBannerImage: {
-    width: '100%',
-    height: 260,
-    backgroundColor: '#1E2A3A',
-  },
-  detailContent: {
-    padding: 20,
-  },
-  detailTitle: {
-    fontSize: 26,
-    fontWeight: '800',
-    color: '#E7EDF5',
-    marginBottom: 12,
-  },
-  detailMetaText: {
-    fontSize: 16,
-    color: '#A5B2C2',
-    marginBottom: 6,
-  },
-  detailGenres: {
-    fontSize: 16,
-    color: '#6f7a89',
-    fontStyle: 'italic',
-    marginTop: 6,
-    marginBottom: 20,
-  },
-  detailDescription: {
-    fontSize: 16,
-    color: '#E7EDF5',
-    lineHeight: 24,
   },
 });
