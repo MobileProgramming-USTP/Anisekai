@@ -2,7 +2,7 @@ import { memo } from 'react';
 
 export const MANGA_SECTION_KEYS = {
   TRENDING: 'MANGA_TRENDING',
-  ALL_TIME: 'MANGA_ALL_TIME',
+  MANHWA: 'MANGA_MANHWA',
   TOP_100: 'MANGA_TOP_100',
 };
 
@@ -16,9 +16,9 @@ export const MANGA_SECTION_CONFIG = [
     viewAllLimit: 25,
   },
   {
-    key: MANGA_SECTION_KEYS.ALL_TIME,
-    title: 'ALL TIME POPULAR',
-    endpoint: '/top/manga?limit=24',
+    key: MANGA_SECTION_KEYS.MANHWA,
+    title: 'TOP MANHWA',
+    endpoint: '/top/manga?type=manhwa&limit=24',
     previewVariant: 'carousel',
     previewCount: 10,
     viewAllLimit: 25,

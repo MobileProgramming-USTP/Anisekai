@@ -498,9 +498,11 @@ const ExploreScreen = () => {
   );
 
   const ScopeSectionComponent = SCOPE_SECTION_COMPONENTS[activeScope] ?? null;
+  const supportsGenreFilter =
+    activeScope === SCOPE_VALUES.ANIME || activeScope === SCOPE_VALUES.MANGA;
 
   const genreOptions = useMemo(() => {
-    if (activeScope !== SCOPE_VALUES.ANIME) {
+    if (!supportsGenreFilter) {
       return [];
     }
 
@@ -517,42 +519,42 @@ const ExploreScreen = () => {
     });
 
     return Array.from(genreSet).sort((a, b) => a.localeCompare(b));
-  }, [sectionsData, activeScope]);
+  }, [sectionsData, supportsGenreFilter]);
 
   const filteredSections = useMemo(() => {
-    if (activeScope !== SCOPE_VALUES.ANIME) {
+    if (!supportsGenreFilter || !selectedGenre) {
       return sectionsData;
     }
 
-    const filterList = (list) => {
-      if (!selectedGenre) return list;
-      return list?.filter((anime) =>
-        anime.genres?.some(
-          (genre) => genre?.name?.toLowerCase() === selectedGenre.toLowerCase()
-        )
+    const matchSelectedGenre = (entry) => {
+      const selectedLower = selectedGenre.toLowerCase();
+      return entry?.genres?.some(
+        (genre) => genre?.name?.toLowerCase() === selectedLower
       );
     };
 
     return Object.keys(sectionsData).reduce((acc, key) => {
-      acc[key] = filterList(sectionsData[key]);
+      const list = sectionsData[key];
+      acc[key] = Array.isArray(list) ? list.filter(matchSelectedGenre) : list;
       return acc;
     }, {});
-  }, [sectionsData, selectedGenre, activeScope]);
+  }, [sectionsData, selectedGenre, supportsGenreFilter]);
 
   const filteredSearchResults = useMemo(() => {
-    if (activeScope !== SCOPE_VALUES.ANIME || !selectedGenre) {
+    if (!supportsGenreFilter || !selectedGenre) {
       return searchResults;
     }
 
+    const selectedLower = selectedGenre.toLowerCase();
     return searchResults.filter((entry) =>
-      entry.genres?.some(
-        (genre) => genre?.name?.toLowerCase() === selectedGenre.toLowerCase()
+      entry?.genres?.some(
+        (genre) => genre?.name?.toLowerCase() === selectedLower
       )
     );
-  }, [searchResults, selectedGenre, activeScope]);
+  }, [searchResults, selectedGenre, supportsGenreFilter]);
 
   const sectionGenreMatches = useMemo(() => {
-    if (activeScope !== SCOPE_VALUES.ANIME) {
+    if (!supportsGenreFilter) {
       return 0;
     }
 
@@ -560,7 +562,7 @@ const ExploreScreen = () => {
       (acc, list) => acc + (Array.isArray(list) ? list.length : 0),
       0
     );
-  }, [filteredSections, activeScope]);
+  }, [filteredSections, supportsGenreFilter]);
 
   useEffect(() => {
     if (!viewAllSection) return;
@@ -844,7 +846,7 @@ const ExploreScreen = () => {
             style={styles.searchInput}
           />
         </View>
-        {activeScope === SCOPE_VALUES.ANIME && (
+        {supportsGenreFilter && (
           <Pressable
             style={[
               styles.genreButton,
@@ -862,7 +864,7 @@ const ExploreScreen = () => {
         )}
       </View>
 
-      {activeScope === SCOPE_VALUES.ANIME &&
+      {supportsGenreFilter &&
         (genrePickerOpen || selectedGenre) &&
         genreOptions.length > 0 && (
         <ScrollView
@@ -901,7 +903,7 @@ const ExploreScreen = () => {
         </ScrollView>
       )}
 
-      {activeScope === SCOPE_VALUES.ANIME &&
+      {supportsGenreFilter &&
         selectedGenre &&
         sectionGenreMatches === 0 &&
         !searchQuery.trim() && (
@@ -927,11 +929,11 @@ const ExploreScreen = () => {
               No {activeScopeLabel.toLowerCase()} match that search.
             </Text>
           ) : (
-            <FlatList
-              data={filteredSearchResults.slice(
-                0,
-                activeScope === SCOPE_VALUES.ANIME ? 10 : 12
-              )}
+              <FlatList
+                data={filteredSearchResults.slice(
+                  0,
+                  supportsGenreFilter ? 10 : 12
+                )}
               key="search-grid"
               numColumns={2}
               keyExtractor={(item, index) => getItemKey(item, index, 'search')}
