@@ -71,7 +71,7 @@ const AnimeCard = ({ item, onSelect, variant = 'carousel' }) => {
   const imageStyle = variant === 'grid' ? styles.gridCardImage : styles.cardImage;
 
   return (
-    <Pressable style={cardStyle} onPress={() => onSelect(item.mal_id)}>
+    <Pressable style={cardStyle} onPress={() => onSelect(item.mal_id)} hitSlop={4}>
       {imageUrl ? (
         <Image source={{ uri: imageUrl }} style={imageStyle} />
       ) : (
@@ -112,11 +112,7 @@ const ExploreScreen = () => {
   };
 
   const handleGenreSelect = (genreName) => {
-    if (!genreName) {
-      setSelectedGenre(null);
-    } else {
-      setSelectedGenre((prev) => (prev === genreName ? null : genreName));
-    }
+    setSelectedGenre(genreName || null);
     setViewAllSection(null);
   };
 
@@ -244,7 +240,6 @@ const ExploreScreen = () => {
         });
       });
     });
-
     return Array.from(genreSet).sort((a, b) => a.localeCompare(b));
   }, [trending, seasonPopular, upcoming, allTimePopular]);
 
@@ -275,11 +270,14 @@ const ExploreScreen = () => {
     );
   }, [searchResults, selectedGenre]);
 
-  const sectionGenreMatches =
-    filteredSections.trending.length +
-    filteredSections.season.length +
-    filteredSections.upcoming.length +
-    filteredSections.allTime.length;
+  const sectionGenreMatches = useMemo(
+    () =>
+      filteredSections.trending.length +
+      filteredSections.season.length +
+      filteredSections.upcoming.length +
+      filteredSections.allTime.length,
+    [filteredSections]
+  );
 
   useEffect(() => {
     if (!viewAllSection) return;
@@ -308,8 +306,7 @@ const ExploreScreen = () => {
     }
 
     const showingAll = viewAllSection === key;
-    const limitedData = showingAll ? data : data.slice(0, 10);
-
+    const listData = showingAll ? data : data.slice(0, 10);
     const listKey = showingAll ? `grid-${key}` : `carousel-${key}`;
 
     return (
@@ -320,12 +317,13 @@ const ExploreScreen = () => {
             <Text style={styles.viewAllText}>{showingAll ? 'Show Less' : 'View All'}</Text>
           </Pressable>
         </View>
+
         {showingAll ? (
           <FlatList
-            data={limitedData}
+            data={listData}
             key={listKey}
-            keyExtractor={(item) => item.mal_id.toString()}
             numColumns={2}
+            keyExtractor={(item) => item.mal_id.toString()}
             columnWrapperStyle={styles.gridRow}
             contentContainerStyle={styles.gridList}
             scrollEnabled={false}
@@ -335,7 +333,7 @@ const ExploreScreen = () => {
           />
         ) : (
           <FlatList
-            data={limitedData}
+            data={listData}
             key={listKey}
             keyExtractor={(item) => item.mal_id.toString()}
             horizontal
@@ -353,7 +351,7 @@ const ExploreScreen = () => {
   if (detailLoading) {
     return (
       <View style={[styles.container, styles.centered]}>
-        <Pressable style={styles.backButton} onPress={handleBackToBrowse}>
+        <Pressable style={styles.backButton} onPress={handleBackToBrowse} hitSlop={8}>
           <Ionicons name="chevron-back" size={18} color="#A5B2C2" />
           <Text style={styles.backButtonText}>Back to Explore</Text>
         </Pressable>
@@ -365,7 +363,7 @@ const ExploreScreen = () => {
   if (detailError) {
     return (
       <View style={[styles.container, styles.centered]}>
-        <Pressable style={styles.backButton} onPress={handleBackToBrowse}>
+        <Pressable style={styles.backButton} onPress={handleBackToBrowse} hitSlop={8}>
           <Ionicons name="chevron-back" size={18} color="#A5B2C2" />
           <Text style={styles.backButtonText}>Back to Explore</Text>
         </Pressable>
@@ -385,7 +383,7 @@ const ExploreScreen = () => {
         contentContainerStyle={styles.detailScrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <Pressable style={styles.backButton} onPress={handleBackToBrowse}>
+        <Pressable style={styles.backButton} onPress={handleBackToBrowse} hitSlop={8}>
           <Ionicons name="chevron-back" size={18} color="#A5B2C2" />
           <Text style={styles.backButtonText}>Back to Explore</Text>
         </Pressable>
@@ -432,7 +430,7 @@ const ExploreScreen = () => {
       </View>
 
       <View style={styles.searchRow}>
-      <View style={styles.searchInputWrapper}>
+        <View style={styles.searchInputWrapper}>
           <Ionicons name="search" size={18} color="#6f7a89" />
           <TextInput
             value={searchQuery}
@@ -471,10 +469,7 @@ const ExploreScreen = () => {
             onPress={() => handleGenreSelect(null)}
           >
             <Text
-              style={[
-                styles.genreChipText,
-                !selectedGenre && styles.genreChipTextActive,
-              ]}
+              style={[styles.genreChipText, !selectedGenre && styles.genreChipTextActive]}
             >
               All
             </Text>
@@ -498,7 +493,7 @@ const ExploreScreen = () => {
         </ScrollView>
       )}
 
-      {selectedGenre && sectionGenreMatches === 0 && !searchQuery.trim().length && (
+      {selectedGenre && sectionGenreMatches === 0 && !searchQuery.trim() && (
         <Text style={[styles.emptyText, styles.genreEmptyText]}>
           No anime found for {selectedGenre}.
         </Text>
@@ -522,8 +517,8 @@ const ExploreScreen = () => {
             <FlatList
               data={filteredSearchResults.slice(0, 10)}
               key="search-grid"
-              keyExtractor={(item) => item.mal_id.toString()}
               numColumns={2}
+              keyExtractor={(item) => item.mal_id.toString()}
               columnWrapperStyle={styles.gridRow}
               contentContainerStyle={styles.gridList}
               scrollEnabled={false}
@@ -536,9 +531,17 @@ const ExploreScreen = () => {
       )}
 
       {renderSection('TRENDING NOW', filteredSections.trending, SECTION_KEYS.TRENDING)}
-      {renderSection('POPULAR THIS SEASON', filteredSections.season, SECTION_KEYS.SEASON)}
+      {renderSection(
+        'POPULAR THIS SEASON',
+        filteredSections.season,
+        SECTION_KEYS.SEASON
+      )}
       {renderSection('UPCOMING ANIMES', filteredSections.upcoming, SECTION_KEYS.UPCOMING)}
-      {renderSection('ALL TIME POPULAR', filteredSections.allTime, SECTION_KEYS.ALL_TIME)}
+      {renderSection(
+        'ALL TIME POPULAR',
+        filteredSections.allTime,
+        SECTION_KEYS.ALL_TIME
+      )}
     </ScrollView>
   );
 };
@@ -669,10 +672,7 @@ const styles = StyleSheet.create({
   },
   card: {
     width: 160,
-    backgroundColor: '#1E2A3A',
-    borderRadius: 16,
     marginRight: 16,
-    padding: 12,
   },
   cardImage: {
     width: '100%',
@@ -688,20 +688,17 @@ const styles = StyleSheet.create({
   cardText: {
     color: '#E7EDF5',
     fontWeight: '600',
+    marginTop: 8,
   },
   gridList: {
     paddingHorizontal: 20,
   },
   gridRow: {
     justifyContent: 'space-between',
-    marginBottom: 16,
   },
   gridCard: {
-    backgroundColor: '#1E2A3A',
-    borderRadius: 16,
-    padding: 12,
-    flex: 1,
-    marginRight: 0,
+    flex: 0.48,
+    marginBottom: 16,
   },
   gridCardImage: {
     width: '100%',
