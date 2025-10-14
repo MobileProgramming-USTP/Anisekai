@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  BackHandler,
   FlatList,
-  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -10,6 +10,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { Image as ExpoImage } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 
 const JIKAN_API_URL = 'https://api.jikan.moe/v4';
@@ -204,7 +205,13 @@ const MediaCard = ({ item, onSelect, variant = 'carousel' }) => {
       disabled={!onSelect}
     >
       {imageUrl ? (
-        <Image source={{ uri: imageUrl }} style={imageStyle} />
+        <ExpoImage
+          source={{ uri: imageUrl }}
+          style={imageStyle}
+          contentFit="cover"
+          transition={180}
+          cachePolicy="memory-disk"
+        />
       ) : (
         <View style={[imageStyle, styles.cardImageFallback]}>
           <Ionicons name="image-outline" size={28} color="#6f7a89" />
@@ -238,6 +245,9 @@ const ExploreScreen = () => {
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState(null);
   const [libraryEntries, setLibraryEntries] = useState({});
+  const requestIdRef = useRef(0);
+  const detailAbortRef = useRef(null);
+  const detailTimeoutRef = useRef(null);
 
   const activeScopeLabel = useMemo(
     () => SCOPE_OPTIONS.find((option) => option.value === activeScope)?.label ?? 'Anime',
@@ -272,7 +282,17 @@ const ExploreScreen = () => {
   };
 
   const handleBackToBrowse = () => {
+    requestIdRef.current += 1;
+    if (detailAbortRef.current) {
+      detailAbortRef.current.abort();
+      detailAbortRef.current = null;
+    }
+    if (detailTimeoutRef.current) {
+      clearTimeout(detailTimeoutRef.current);
+      detailTimeoutRef.current = null;
+    }
     setSelectedAnime(null);
+    setDetailLoading(false);
     setDetailError(null);
     setGenrePickerOpen(false);
     closeScopeMenu();
@@ -284,27 +304,74 @@ const ExploreScreen = () => {
     }
 
     try {
+      const currentRequestId = requestIdRef.current + 1;
+      requestIdRef.current = currentRequestId;
+      if (detailAbortRef.current) {
+        detailAbortRef.current.abort();
+      }
+      if (detailTimeoutRef.current) {
+        clearTimeout(detailTimeoutRef.current);
+        detailTimeoutRef.current = null;
+      }
+      const controller = new AbortController();
+      detailAbortRef.current = controller;
+      detailTimeoutRef.current = setTimeout(() => {
+        if (detailAbortRef.current === controller) {
+          controller.abort();
+        }
+      }, 10000);
       setDetailLoading(true);
       setDetailError(null);
-      setSelectedAnime(null);
+      setSelectedAnime({ ...item });
       setViewAllSection(null);
       setGenrePickerOpen(false);
 
       const data = await fetchJsonWithRetry(`${JIKAN_API_URL}/anime/${item.mal_id}/full`, {
         retries: 3,
+        signal: controller.signal,
       });
-      setSelectedAnime(data.data);
+      if (requestIdRef.current === currentRequestId) {
+        setSelectedAnime(data.data);
+      }
     } catch (e) {
-      const friendlyMessage =
-        typeof e?.message === 'string' && e.message.includes('429')
-          ? 'Rate limit reached. Please try again shortly.'
-          : 'Failed to load details.';
-      setDetailError(friendlyMessage);
-      console.error(e);
+      if (requestIdRef.current === currentRequestId) {
+        const friendlyMessage =
+          e?.name === 'AbortError'
+            ? 'Request canceled. Please try again.'
+            : typeof e?.message === 'string' && e.message.includes('429')
+            ? 'Rate limit reached. Please try again shortly.'
+            : 'Failed to load details.';
+        setDetailError(friendlyMessage);
+        console.error(e);
+      }
     } finally {
-      setDetailLoading(false);
+      if (requestIdRef.current === currentRequestId) {
+        if (detailTimeoutRef.current) {
+          clearTimeout(detailTimeoutRef.current);
+          detailTimeoutRef.current = null;
+        }
+        if (detailAbortRef.current) {
+          detailAbortRef.current = null;
+        }
+        setDetailLoading(false);
+      }
     }
   };
+
+  useEffect(() => {
+    if (!selectedAnime && !detailLoading && !detailError) {
+      return;
+    }
+
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+      handleBackToBrowse();
+      return true;
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [selectedAnime, detailLoading, detailError]);
 
   useEffect(() => {
     let isCancelled = false;
@@ -556,30 +623,6 @@ const ExploreScreen = () => {
     );
   };
 
-  if (detailLoading) {
-    return (
-      <View style={[styles.container, styles.centered]}>
-        <Pressable style={styles.backButton} onPress={handleBackToBrowse} hitSlop={8}>
-          <Ionicons name="chevron-back" size={18} color="#A5B2C2" />
-          <Text style={styles.backButtonText}>Back to Explore</Text>
-        </Pressable>
-        <ActivityIndicator size="large" color="#fcbf49" />
-      </View>
-    );
-  }
-
-  if (detailError) {
-    return (
-      <View style={[styles.container, styles.centered]}>
-        <Pressable style={styles.backButton} onPress={handleBackToBrowse} hitSlop={8}>
-          <Ionicons name="chevron-back" size={18} color="#A5B2C2" />
-          <Text style={styles.backButtonText}>Back to Explore</Text>
-        </Pressable>
-        <Text style={styles.errorText}>{detailError}</Text>
-      </View>
-    );
-  }
-
   if (selectedAnime) {
     const coverImage =
       selectedAnime.images?.jpg?.large_image_url ||
@@ -616,15 +659,16 @@ const ExploreScreen = () => {
         contentContainerStyle={styles.detailScrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <Pressable style={styles.backButton} onPress={handleBackToBrowse} hitSlop={8}>
-          <Ionicons name="chevron-back" size={18} color="#A5B2C2" />
-          <Text style={styles.backButtonText}>Back to Explore</Text>
-        </Pressable>
-
         <View style={styles.detailCard}>
           <View style={styles.detailCoverWrapper}>
             {coverImage ? (
-              <Image source={{ uri: coverImage }} style={styles.detailCoverImage} />
+              <ExpoImage
+                source={{ uri: coverImage }}
+                style={styles.detailCoverImage}
+                contentFit="cover"
+                transition={200}
+                cachePolicy="memory-disk"
+              />
             ) : (
               <View style={[styles.detailCoverImage, styles.cardImageFallback]}>
                 <Ionicons name="image-outline" size={28} color="#6f7a89" />
@@ -663,6 +707,10 @@ const ExploreScreen = () => {
             </Pressable>
           </View>
         </View>
+
+        {detailError ? (
+          <Text style={[styles.errorText, styles.detailInlineError]}>{detailError}</Text>
+        ) : null}
 
         {genres.length > 0 && (
           <View style={styles.detailGenresSection}>
@@ -900,7 +948,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   detailCard: {
-    marginTop: 24,
+    marginTop: 60,
     flexDirection: 'row',
     alignItems: 'flex-start',
   },
@@ -933,6 +981,15 @@ const styles = StyleSheet.create({
     fontSize: 15,
     marginLeft: 8,
     flexShrink: 1,
+  },
+  detailInlineSpinner: {
+    marginTop: 16,
+    alignSelf: 'flex-start',
+  },
+  detailInlineError: {
+    textAlign: 'left',
+    paddingHorizontal: 0,
+    marginTop: 16,
   },
   detailGenresSection: {
     marginTop: 28,
@@ -1184,22 +1241,5 @@ const styles = StyleSheet.create({
   searchCount: {
     color: '#6f7a89',
     fontSize: 14,
-  },
-  backButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#1E2A3A',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 10,
-    alignSelf: 'flex-start',
-    marginHorizontal: 0,
-    marginTop: 40,
-    marginBottom: 16,
-  },
-  backButtonText: {
-    color: '#A5B2C2',
-    fontWeight: '700',
-    marginLeft: 6,
   },
 });
