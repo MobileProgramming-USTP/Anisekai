@@ -1,6 +1,6 @@
-import { Ionicons } from "@expo/vector-icons"
-import { Tabs } from "expo-router"
-import { Platform, Pressable } from "react-native"
+import { Ionicons } from "@expo/vector-icons";
+import { Tabs } from "expo-router";
+import { Platform, Pressable } from "react-native";
 
 export default function TabsLayout() {
   return (
@@ -29,23 +29,30 @@ export default function TabsLayout() {
         tabBarButton: (props) => <Pressable {...props} android_ripple={null} />,
       }}
     >
-
       <Tabs.Screen
-        name="explore"
+        name="explore/index"
         options={{
           title: "Explore",
           tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons name={focused ? "search" : "search-outline"} size={size} color={color} />
+            <Ionicons
+              name={focused ? "search" : "search-outline"}
+              size={size}
+              color={color}
+            />
           ),
         }}
       />
 
       <Tabs.Screen
-        name="library"
+        name="library/index"
         options={{
           title: "Library",
           tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons name={focused ? "bookmark" : "bookmark-outline"} size={size} color={color} />
+            <Ionicons
+              name={focused ? "bookmark" : "bookmark-outline"}
+              size={size}
+              color={color}
+            />
           ),
         }}
       />
@@ -55,17 +62,25 @@ export default function TabsLayout() {
         options={{
           title: "Home",
           tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons name={focused ? "grid" : "grid-outline"} size={size} color={color} />
+            <Ionicons
+              name={focused ? "grid" : "grid-outline"}
+              size={size}
+              color={color}
+            />
           ),
         }}
       />
 
       <Tabs.Screen
-        name="miscellaneous"
+        name="miscellaneous/index"
         options={{
           title: "Misc",
           tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons name={focused ? "dice" : "dice-outline"} size={size} color={color} />
+            <Ionicons
+              name={focused ? "dice" : "dice-outline"}
+              size={size}
+              color={color}
+            />
           ),
         }}
       />
@@ -75,11 +90,14 @@ export default function TabsLayout() {
         options={{
           title: "Profile",
           tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons name={focused ? "person" : "person-outline"} size={size} color={color} />
+            <Ionicons
+              name={focused ? "person" : "person-outline"}
+              size={size}
+              color={color}
+            />
           ),
         }}
       />
-
     </Tabs>
-  )
+  );
 }
