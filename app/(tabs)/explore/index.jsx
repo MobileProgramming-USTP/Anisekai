@@ -205,6 +205,7 @@ const ExploreScreen = () => {
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState(null);
   const [libraryEntries, setLibraryEntries] = useState({});
+  const [scopeDataCache, setScopeDataCache] = useState({});
   const requestIdRef = useRef(0);
   const detailAbortRef = useRef(null);
   const detailTimeoutRef = useRef(null);
@@ -226,9 +227,11 @@ const ExploreScreen = () => {
   const closeScopeMenu = () => setScopeMenuOpen(false);
 
   const handleScopeChange = (nextScope) => {
+    const cachedData = scopeDataCache[nextScope];
     setActiveScope(nextScope);
     closeScopeMenu();
-    setSectionsData({});
+    setSectionsData(cachedData ?? {});
+    setLoading(!cachedData);
     setSelectedDetail(null);
     setSelectedDetailScope(null);
     setDetailError(null);
@@ -417,14 +420,24 @@ const ExploreScreen = () => {
   useEffect(() => {
     let isCancelled = false;
     const sections = SECTION_CONFIG[activeScope] ?? [];
+    const cachedData = scopeDataCache[activeScope];
+    const shouldShowLoading = !cachedData;
 
-    const fetchScopeSections = async () => {
+    if (cachedData) {
+      setSectionsData(cachedData);
+      setLoading(false);
+    }
+
+    const fetchScopeSections = async (showLoading) => {
       try {
-        setLoading(true);
-        setError(null);
-
-        if (!isCancelled) {
-          setSectionsData({});
+        if (showLoading) {
+          setLoading(true);
+          setError(null);
+          if (!isCancelled) {
+            setSectionsData({});
+          }
+        } else {
+          setError(null);
         }
 
         if (sections.length === 0) {
@@ -471,6 +484,10 @@ const ExploreScreen = () => {
 
         if (!isCancelled) {
           setSectionsData(nextData);
+          setScopeDataCache((prev) => ({
+            ...prev,
+            [activeScope]: nextData,
+          }));
         }
       } catch (e) {
         if (!isCancelled) {
@@ -482,13 +499,13 @@ const ExploreScreen = () => {
           console.error(e);
         }
       } finally {
-        if (!isCancelled) {
+        if (!isCancelled && showLoading) {
           setLoading(false);
         }
       }
     };
 
-    fetchScopeSections();
+    fetchScopeSections(shouldShowLoading);
 
     return () => {
       isCancelled = true;
@@ -798,17 +815,17 @@ const ExploreScreen = () => {
           <View style={styles.detailHeaderInfo}>
             <Text style={styles.detailTitle}>{selectedDetail.title}</Text>
 
-            <View style={styles.detailMetaRow}>
-              <Ionicons name={statusIcon} size={18} color="#A5B2C2" />
-              <Text style={styles.detailMetaText}>{statusLabel}</Text>
-            </View>
-
             {creatorsText ? (
               <View style={styles.detailMetaRow}>
                 <Ionicons name={creatorsIcon} size={18} color="#A5B2C2" />
                 <Text style={styles.detailMetaText}>{creatorsText}</Text>
               </View>
             ) : null}
+
+            <View style={styles.detailMetaRow}>
+              <Ionicons name={statusIcon} size={18} color="#A5B2C2" />
+              <Text style={styles.detailMetaText}>{statusLabel}</Text>
+            </View>
 
             <View style={styles.detailMetaRow}>
               <Ionicons name={lengthIcon} size={18} color="#A5B2C2" />
