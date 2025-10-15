@@ -910,7 +910,7 @@ const LibraryScreen = () => {
                 <Pressable
                   style={[
                     styles.detailActionChip,
-                    { borderColor: statusChipAccent },
+                    styles.detailActionChipStatus,
                   ]}
                   onPress={handleOpenStatusPicker}
                   hitSlop={6}
@@ -925,8 +925,10 @@ const LibraryScreen = () => {
                     <Text
                       style={[
                         styles.detailActionLabel,
-                        styles.detailActionLabelStatus,
+                        { color: statusChipAccent },
                       ]}
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
                     >
                       {selectedStatusLabel || 'Set status'}
                     </Text>
@@ -947,7 +949,13 @@ const LibraryScreen = () => {
                       size={16}
                       color="#58CC8A"
                     />
-                    <Text style={styles.detailActionLabel}>{progressChipText}</Text>
+                    <Text
+                      style={styles.detailActionLabel}
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                    >
+                      {progressChipText}
+                    </Text>
                   </View>
                 </Pressable>
 
@@ -955,13 +963,18 @@ const LibraryScreen = () => {
                   style={[
                     styles.detailActionChip,
                     styles.detailActionChipDark,
+                    styles.detailActionChipLast,
                   ]}
                   onPress={handleOpenRatingModal}
                   hitSlop={6}
                 >
                   <View style={styles.detailActionInline}>
                     <Ionicons name="star" size={16} color="#F9C74F" />
-                    <Text style={styles.detailActionLabel}>
+                    <Text
+                      style={styles.detailActionLabel}
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                    >
                       {ratingChipText}
                     </Text>
                   </View>
@@ -1445,7 +1458,7 @@ const styles = StyleSheet.create({
   },
   detailActionsRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexWrap: 'nowrap',
     marginBottom: 28,
   },
   detailActionChip: {
@@ -1459,14 +1472,25 @@ const styles = StyleSheet.create({
     borderColor: '#1E2A3A',
     marginRight: 12,
     marginTop: 12,
+    flex: 1,
+    minWidth: 0,
   },
   detailActionChipDark: {
     backgroundColor: '#1E2A3A',
     borderColor: '#1E2A3A',
   },
+  detailActionChipStatus: {
+    borderWidth: 0,
+    backgroundColor: '#1E2A3A',
+  },
+  detailActionChipLast: {
+    marginRight: 0,
+  },
   detailActionInline: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
+    minWidth: 0,
   },
   detailActionDot: {
     width: 10,
@@ -1477,9 +1501,8 @@ const styles = StyleSheet.create({
     color: '#E7EDF5',
     fontWeight: '600',
     marginLeft: 8,
-  },
-  detailActionLabelStatus: {
-    color: '#4C82FF',
+    flexShrink: 1,
+    minWidth: 0,
   },
   detailSection: {
     marginBottom: 28,
