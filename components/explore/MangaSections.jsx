@@ -32,6 +32,7 @@ export const MANGA_SECTION_CONFIG = [
     previewVariant: 'carousel',
     previewCount: 10,
     viewAllLimit: 100,
+    showRankBadge: true,
   },
 ];
 

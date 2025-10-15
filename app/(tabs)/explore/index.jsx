@@ -131,7 +131,26 @@ const getItemKey = (item, index, prefix = 'item') => {
   return `${prefix}-${index}`;
 };
 
-const MediaCard = ({ item, onSelect, variant = 'carousel' }) => {
+const RANK_BADGE_COLORS = [
+  '#C7E9F1',
+  '#F9D7E9',
+  '#DDE7C7',
+  '#FFE5B9',
+  '#E5D1FF',
+  '#FDE7D7',
+  '#D0E8FC',
+  '#F8D6D0',
+  '#E0F2E9',
+  '#F1D4F4',
+];
+
+const MediaCard = ({
+  item,
+  onSelect,
+  variant = 'carousel',
+  badgeLabel = null,
+  badgeColor = null,
+}) => {
   const title = item?.title || item?.name || item?.username || 'Untitled';
   const imageUrl =
     item?.images?.jpg?.large_image_url ||
@@ -165,6 +184,16 @@ const MediaCard = ({ item, onSelect, variant = 'carousel' }) => {
       hitSlop={4}
       disabled={!onSelect}
     >
+      {badgeLabel ? (
+        <View
+          style={[
+            styles.rankBadge,
+            { backgroundColor: badgeColor || '#C7E9F1' },
+          ]}
+        >
+          <Text style={styles.rankBadgeText}>{badgeLabel}</Text>
+        </View>
+      ) : null}
       {imageUrl ? (
         <ExpoImage
           source={{ uri: imageUrl }}
@@ -708,6 +737,8 @@ const ExploreScreen = () => {
       : Math.min(previewVisibleCount, data.length);
     const listData = data.slice(0, visibleCount);
     const listKey = useGrid ? `grid-${key}` : `carousel-${key}`;
+    const showRankBadge =
+      Boolean(section.showRankBadge) && activeScope === SCOPE_VALUES.MANGA;
     const cardVariant =
       activeScope === SCOPE_VALUES.USERS
         ? 'user'
@@ -723,9 +754,22 @@ const ExploreScreen = () => {
 
     const keyExtractor = (item, index) => getItemKey(item, index, key);
 
-    const renderItem = ({ item }) => (
-      <MediaCard item={item} onSelect={cardOnSelect} variant={cardVariant} />
-    );
+    const renderItem = ({ item }) => {
+      const baseRank =
+        data.findIndex((entry) => entry?.mal_id === item?.mal_id) + 1;
+      const absoluteRank = baseRank > 0 ? baseRank : data.indexOf(item) + 1;
+      const badgeColor =
+        RANK_BADGE_COLORS[(absoluteRank - 1) % RANK_BADGE_COLORS.length];
+      return (
+        <MediaCard
+          item={item}
+          onSelect={cardOnSelect}
+          variant={cardVariant}
+          badgeLabel={showRankBadge ? `#${absoluteRank}` : null}
+          badgeColor={showRankBadge ? badgeColor : null}
+        />
+      );
+    };
 
     return (
       <View style={styles.sectionContainer} key={key}>
@@ -1470,6 +1514,7 @@ const styles = StyleSheet.create({
   card: {
     width: 160,
     marginRight: 16,
+    position: 'relative',
   },
   cardImage: {
     width: '100%',
@@ -1496,6 +1541,7 @@ const styles = StyleSheet.create({
   gridCard: {
     flex: 0.48,
     marginBottom: 16,
+    position: 'relative',
   },
   gridCardImage: {
     width: '100%',
@@ -1514,6 +1560,22 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 12,
     backgroundColor: '#2a2a2a',
+  },
+  rankBadge: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 2,
+  },
+  rankBadgeText: {
+    color: '#0F1719',
+    fontWeight: '800',
+    fontSize: 11,
   },
   centered: {
     justifyContent: 'center',
