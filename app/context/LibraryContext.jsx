@@ -56,6 +56,11 @@ const resolveCoverImage = (media) =>
   media?.pictures?.[0]?.jpg?.image_url ||
   null;
 
+const initializeProgress = () => ({
+  watchedEpisodes: 0,
+  readChapters: 0,
+});
+
 const buildLibraryEntry = (media, status, scope) => {
   const coverImage = resolveCoverImage(media);
   const { mal_id: id } = media ?? {};
@@ -70,6 +75,8 @@ const buildLibraryEntry = (media, status, scope) => {
     score: typeof media?.score === 'number' ? media.score : null,
     episodes: typeof media?.episodes === 'number' ? media.episodes : null,
     chapters: typeof media?.chapters === 'number' ? media.chapters : null,
+    progress: initializeProgress(),
+    rating: null,
     updatedAt: Date.now(),
     raw: media ?? null,
   };
@@ -90,11 +97,19 @@ export const LibraryProvider = ({ children }) => {
       const existing = prev[media.mal_id];
 
       if (existing) {
+        const preservedProgress =
+          existing.progress && typeof existing.progress === 'object'
+            ? existing.progress
+            : initializeProgress();
+        const preservedRating =
+          typeof existing.rating === 'number' ? existing.rating : nextEntry.rating;
         return {
           ...prev,
           [media.mal_id]: {
             ...existing,
             ...nextEntry,
+            progress: preservedProgress,
+            rating: preservedRating,
             raw: media ?? existing.raw,
             updatedAt: Date.now(),
           },
@@ -154,6 +169,72 @@ export const LibraryProvider = ({ children }) => {
     });
   }, [removeEntry]);
 
+  const updateEntryProgress = useCallback((malId, value, type = 'episodes') => {
+    if (malId == null) {
+      return;
+    }
+
+    setEntriesById((prev) => {
+      const existing = prev[malId];
+      if (!existing) {
+        return prev;
+      }
+
+      const sanitizedValue =
+        typeof value === 'number' && Number.isFinite(value) && value >= 0
+          ? Math.floor(value)
+          : 0;
+
+      const nextProgress = {
+        ...(existing.progress && typeof existing.progress === 'object'
+          ? existing.progress
+          : initializeProgress()),
+      };
+
+      if (type === 'chapters') {
+        nextProgress.readChapters = sanitizedValue;
+      } else {
+        nextProgress.watchedEpisodes = sanitizedValue;
+      }
+
+      return {
+        ...prev,
+        [malId]: {
+          ...existing,
+          progress: nextProgress,
+          updatedAt: Date.now(),
+        },
+      };
+    });
+  }, []);
+
+  const updateEntryRating = useCallback((malId, rating) => {
+    if (malId == null) {
+      return;
+    }
+
+    setEntriesById((prev) => {
+      const existing = prev[malId];
+      if (!existing) {
+        return prev;
+      }
+
+      const sanitizedRating =
+        typeof rating === 'number' && Number.isFinite(rating) && rating >= 0
+          ? Math.min(10, Math.round(rating * 10) / 10)
+          : null;
+
+      return {
+        ...prev,
+        [malId]: {
+          ...existing,
+          rating: sanitizedRating,
+          updatedAt: Date.now(),
+        },
+      };
+    });
+  }, []);
+
   const resetLibrary = useCallback(() => {
     setEntriesById({});
   }, []);
@@ -180,6 +261,8 @@ export const LibraryProvider = ({ children }) => {
       upsertEntry,
       removeEntry,
       updateEntryStatus,
+      updateEntryProgress,
+      updateEntryRating,
       resetLibrary,
       statuses: LIBRARY_STATUS,
       statusMeta: LIBRARY_STATUS_META,
@@ -192,6 +275,8 @@ export const LibraryProvider = ({ children }) => {
       upsertEntry,
       removeEntry,
       updateEntryStatus,
+      updateEntryProgress,
+      updateEntryRating,
       resetLibrary,
       resolveStatusLabel,
     ]
