@@ -15,9 +15,17 @@ export const LIBRARY_STATUS_ORDER = [
 ];
 
 export const LIBRARY_STATUS_META = {
-  [LIBRARY_STATUS.WATCHING]: { label: 'Watching', color: '#4C82FF' },
+  [LIBRARY_STATUS.WATCHING]: {
+    label: 'Watching',
+    color: '#4C82FF',
+    scopeLabels: { manga: 'Reading' },
+  },
   [LIBRARY_STATUS.COMPLETED]: { label: 'Completed', color: '#58CC8A' },
-  [LIBRARY_STATUS.WATCHLIST]: { label: 'Watchlist', color: '#F9C74F' },
+  [LIBRARY_STATUS.WATCHLIST]: {
+    label: 'Watchlist',
+    color: '#F9C74F',
+    scopeLabels: { manga: 'Readlist' },
+  },
   [LIBRARY_STATUS.DROPPED]: { label: 'Dropped', color: '#FF6B6B' },
 };
 
@@ -150,6 +158,21 @@ export const LibraryProvider = ({ children }) => {
     setEntriesById({});
   }, []);
 
+  const resolveStatusLabel = useCallback((statusKey, scope) => {
+    const meta = LIBRARY_STATUS_META[statusKey];
+    if (!meta) {
+      return statusKey;
+    }
+
+    const normalizedScope = typeof scope === 'string' ? scope.toLowerCase() : '';
+    const scopeLabel = normalizedScope ? meta.scopeLabels?.[normalizedScope] : null;
+    if (scopeLabel) {
+      return scopeLabel;
+    }
+
+    return meta.label;
+  }, []);
+
   const value = useMemo(
     () => ({
       entriesById,
@@ -162,8 +185,16 @@ export const LibraryProvider = ({ children }) => {
       statusMeta: LIBRARY_STATUS_META,
       statusOrder: LIBRARY_STATUS_ORDER,
       defaultStatus: DEFAULT_STATUS,
+      resolveStatusLabel,
     }),
-    [entriesById, upsertEntry, removeEntry, updateEntryStatus, resetLibrary]
+    [
+      entriesById,
+      upsertEntry,
+      removeEntry,
+      updateEntryStatus,
+      resetLibrary,
+      resolveStatusLabel,
+    ]
   );
 
   return <LibraryContext.Provider value={value}>{children}</LibraryContext.Provider>;

@@ -64,6 +64,7 @@ const LibraryScreen = () => {
     entries: libraryEntries,
     statusMeta: libraryStatusMeta,
     statusOrder: libraryStatusOrder,
+    resolveStatusLabel: resolveLibraryStatusLabel,
   } = useLibrary();
 
   const statusMeta = libraryStatusMeta || {};
@@ -206,6 +207,10 @@ const LibraryScreen = () => {
     }
 
     const statusInfo = statusMeta[statusKey] || {};
+    const statusLabel =
+      resolveLibraryStatusLabel?.(statusKey, activeScope) ||
+      statusInfo.label ||
+      statusKey;
     const showingAll = viewAllStatusKey === statusKey;
     const visibleCount = showingAll
       ? entriesForStatus.length
@@ -223,7 +228,7 @@ const LibraryScreen = () => {
               ]}
             />
             <Text style={styles.sectionTitle}>
-              {(statusInfo.label || statusKey).toUpperCase()}
+              {statusLabel.toUpperCase()}
             </Text>
           </View>
           {entriesForStatus.length >= VIEW_ALL_BUTTON_THRESHOLD || showingAll ? (
@@ -388,6 +393,10 @@ const LibraryScreen = () => {
           {statusOrder.map((statusKey) => {
             const statusInfo = statusMeta[statusKey] || {};
             const isActive = selectedStatusKey === statusKey;
+            const statusLabel =
+              resolveLibraryStatusLabel?.(statusKey, activeScope) ||
+              statusInfo.label ||
+              statusKey;
             return (
               <Pressable
                 key={statusKey}
@@ -407,7 +416,7 @@ const LibraryScreen = () => {
                     isActive && styles.statusChipLabelActive,
                   ]}
                 >
-                  {statusInfo.label || statusKey}
+                  {statusLabel}
                 </Text>
               </Pressable>
             );

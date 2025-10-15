@@ -242,6 +242,7 @@ const ExploreScreen = () => {
     upsertEntry: upsertLibraryEntry,
     removeEntry: removeLibraryEntry,
     defaultStatus: libraryDefaultStatus,
+    resolveStatusLabel: resolveLibraryStatusLabel,
   } = useLibrary();
   const [statusPickerVisible, setStatusPickerVisible] = useState(false);
   const [statusSelection, setStatusSelection] = useState(null);
@@ -985,8 +986,12 @@ const ExploreScreen = () => {
       ? libraryEntriesById[selectedDetail.mal_id]
       : null;
     const isInLibrary = Boolean(currentLibraryEntry);
+    const entryScope = currentLibraryEntry?.scope || selectedDetailScope;
     const libraryStatusLabel = currentLibraryEntry
-      ? libraryStatusMeta?.[currentLibraryEntry.status]?.label || 'In Library'
+      ? resolveLibraryStatusLabel?.(
+          currentLibraryEntry.status,
+          entryScope
+        ) || 'In Library'
       : null;
     const statusAccentColor = currentLibraryEntry
       ? libraryStatusMeta?.[currentLibraryEntry.status]?.color || '#f55f5f'
@@ -1167,6 +1172,11 @@ const ExploreScreen = () => {
                   const optionMeta = libraryStatusMeta?.[statusKey];
                   const selected = statusSelection === statusKey;
                   const optionColor = optionMeta?.color || '#fcbf49';
+                  const optionLabel =
+                    resolveLibraryStatusLabel?.(
+                      statusKey,
+                      selectedDetailScope
+                    ) || optionMeta?.label || statusKey;
 
                   return (
                     <Pressable
@@ -1183,7 +1193,7 @@ const ExploreScreen = () => {
                         ]}
                       />
                       <Text style={styles.statusOptionLabel}>
-                        {optionMeta?.label || statusKey}
+                        {optionLabel}
                       </Text>
                       {selected ? <Ionicons name="checkmark" size={18} color="#fcbf49" /> : null}
                     </Pressable>
