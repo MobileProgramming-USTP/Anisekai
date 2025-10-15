@@ -34,13 +34,7 @@
           "backgroundColor": "#ffffff"
         }
       ],
-      "expo-video",
-      [
-        "expo-image-picker",
-        {
-          "photosPermission": "Allow $(PRODUCT_NAME) to access your photos so you can upload anime scenes."
-        }
-      ]
+      "expo-video"
     ],
     "experiments": {
       "typedRoutes": true
