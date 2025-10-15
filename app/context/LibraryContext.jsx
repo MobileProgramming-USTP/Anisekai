@@ -1,4 +1,7 @@
-import { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useMutation, useQuery } from 'convex/react';
+import { api } from '../../convex/_generated/api';
+import { useAuth } from './AuthContext';
 
 export const LIBRARY_STATUS = {
   WATCHING: 'watching',
@@ -82,102 +85,241 @@ const buildLibraryEntry = (media, status, scope) => {
   };
 };
 
+const ensureProgressShape = (progress) => {
+  if (!progress || typeof progress !== 'object') {
+    return initializeProgress();
+  }
+
+  const { watchedEpisodes, readChapters } = progress;
+  const safeEpisodes =
+    typeof watchedEpisodes === 'number' && Number.isFinite(watchedEpisodes) && watchedEpisodes >= 0
+      ? Math.floor(watchedEpisodes)
+      : 0;
+  const safeChapters =
+    typeof readChapters === 'number' && Number.isFinite(readChapters) && readChapters >= 0
+      ? Math.floor(readChapters)
+      : 0;
+
+  return {
+    watchedEpisodes: safeEpisodes,
+    readChapters: safeChapters,
+  };
+};
+
+const sanitizeNullableNumber = (value) =>
+  typeof value === 'number' && Number.isFinite(value) ? value : null;
+
+const toBackendEntryPayload = (entry) => {
+  const malId = typeof entry?.mal_id === 'number' ? entry.mal_id : entry?.malId;
+  if (typeof malId !== 'number') {
+    return null;
+  }
+
+  return {
+    malId,
+    status: entry?.status || DEFAULT_STATUS,
+    scope: entry?.scope || 'anime',
+    title: entry?.title || 'Untitled',
+    coverImage: entry?.coverImage ?? null,
+    score: sanitizeNullableNumber(entry?.score),
+    episodes: sanitizeNullableNumber(entry?.episodes),
+    chapters: sanitizeNullableNumber(entry?.chapters),
+    progress: ensureProgressShape(entry?.progress),
+    rating: sanitizeNullableNumber(entry?.rating),
+    raw: entry?.raw ?? null,
+  };
+};
+
+const fromBackendEntry = (entry) => {
+  const malId = typeof entry?.mal_id === 'number' ? entry.mal_id : entry?.malId;
+  if (typeof malId !== 'number') {
+    return null;
+  }
+
+  const updatedAt =
+    typeof entry?.updatedAt === 'number' && Number.isFinite(entry.updatedAt)
+      ? entry.updatedAt
+      : Date.now();
+
+  return {
+    ...entry,
+    id: entry?.id ?? malId,
+    mal_id: malId,
+    progress: ensureProgressShape(entry?.progress),
+    rating: sanitizeNullableNumber(entry?.rating),
+    score: sanitizeNullableNumber(entry?.score),
+    episodes: sanitizeNullableNumber(entry?.episodes),
+    chapters: sanitizeNullableNumber(entry?.chapters),
+    coverImage: entry?.coverImage ?? null,
+    raw: entry?.raw ?? null,
+    updatedAt,
+  };
+};
+
 export const LibraryProvider = ({ children }) => {
+  const { user } = useAuth();
+  const userId = user?.id ?? null;
+
   const [entriesById, setEntriesById] = useState({});
 
-  const upsertEntry = useCallback((media, { status, scope } = {}) => {
-    if (!media?.mal_id) {
+  const remoteEntries = useQuery(
+    api['functions/library'].list,
+    userId ? { userId } : undefined
+  );
+
+  const saveEntryMutation = useMutation(api['functions/library'].save);
+  const removeEntryMutation = useMutation(api['functions/library'].remove);
+  const updateStatusMutation = useMutation(api['functions/library'].updateStatus);
+  const updateProgressMutation = useMutation(api['functions/library'].updateProgress);
+  const updateRatingMutation = useMutation(api['functions/library'].updateRating);
+
+  useEffect(() => {
+    if (!userId) {
+      setEntriesById({});
       return;
     }
 
-    const statusKey = status || DEFAULT_STATUS;
+    if (remoteEntries === undefined) {
+      return;
+    }
 
-    setEntriesById((prev) => {
-      const nextEntry = buildLibraryEntry(media, statusKey, scope);
-      const existing = prev[media.mal_id];
+    if (!Array.isArray(remoteEntries)) {
+      setEntriesById({});
+      return;
+    }
 
-      if (existing) {
-        const preservedProgress =
-          existing.progress && typeof existing.progress === 'object'
-            ? existing.progress
-            : initializeProgress();
-        const preservedRating =
-          typeof existing.rating === 'number' ? existing.rating : nextEntry.rating;
-        return {
-          ...prev,
-          [media.mal_id]: {
+    const mapped = remoteEntries.reduce((acc, entry) => {
+      const normalized = fromBackendEntry(entry);
+      if (!normalized) {
+        return acc;
+      }
+      acc[normalized.mal_id] = normalized;
+      return acc;
+    }, {});
+
+    setEntriesById(mapped);
+  }, [remoteEntries, userId]);
+
+  const upsertEntry = useCallback(
+    (media, { status, scope } = {}) => {
+      if (!media?.mal_id) {
+        return;
+      }
+
+      const statusKey = status || DEFAULT_STATUS;
+      let mergedEntry = null;
+
+      setEntriesById((prev) => {
+        const nextEntry = buildLibraryEntry(media, statusKey, scope);
+        const existing = prev[media.mal_id];
+
+        if (existing) {
+          const preservedProgress = ensureProgressShape(existing.progress);
+          const preservedRating =
+            typeof existing.rating === 'number' ? existing.rating : nextEntry.rating;
+
+          mergedEntry = {
             ...existing,
             ...nextEntry,
             progress: preservedProgress,
             rating: preservedRating,
             raw: media ?? existing.raw,
             updatedAt: Date.now(),
+          };
+        } else {
+          mergedEntry = nextEntry;
+        }
+
+        return {
+          ...prev,
+          [media.mal_id]: mergedEntry,
+        };
+      });
+
+      if (mergedEntry && userId) {
+        const payload = toBackendEntryPayload(mergedEntry);
+        if (payload) {
+          saveEntryMutation({ userId, entry: payload }).catch((error) => {
+            console.error('Failed to persist library entry', error);
+          });
+        }
+      }
+    },
+    [saveEntryMutation, userId]
+  );
+
+  const removeEntry = useCallback(
+    (malId) => {
+      if (malId == null) {
+        return;
+      }
+
+      let hadEntry = false;
+      setEntriesById((prev) => {
+        if (!prev[malId]) {
+          return prev;
+        }
+        hadEntry = true;
+        const next = { ...prev };
+        delete next[malId];
+        return next;
+      });
+
+      if (hadEntry && userId) {
+        removeEntryMutation({ userId, malId }).catch((error) => {
+          console.error('Failed to remove library entry', error);
+        });
+      }
+    },
+    [removeEntryMutation, userId]
+  );
+
+  const updateEntryStatus = useCallback(
+    (malId, status) => {
+      if (malId == null) {
+        return;
+      }
+
+      if (!status) {
+        removeEntry(malId);
+        return;
+      }
+
+      let didChange = false;
+      setEntriesById((prev) => {
+        const existing = prev[malId];
+        if (!existing) {
+          return prev;
+        }
+
+        if (existing.status === status) {
+          return prev;
+        }
+
+        didChange = true;
+        return {
+          ...prev,
+          [malId]: {
+            ...existing,
+            status,
+            updatedAt: Date.now(),
           },
         };
+      });
+
+      if (didChange && userId) {
+        updateStatusMutation({ userId, malId, status }).catch((error) => {
+          console.error('Failed to update library status', error);
+        });
       }
+    },
+    [removeEntry, updateStatusMutation, userId]
+  );
 
-      return {
-        ...prev,
-        [media.mal_id]: nextEntry,
-      };
-    });
-  }, []);
-
-  const removeEntry = useCallback((malId) => {
-    if (malId == null) {
-      return;
-    }
-
-    setEntriesById((prev) => {
-      if (!prev[malId]) {
-        return prev;
-      }
-      const next = { ...prev };
-      delete next[malId];
-      return next;
-    });
-  }, []);
-
-  const updateEntryStatus = useCallback((malId, status) => {
-    if (malId == null) {
-      return;
-    }
-
-    if (!status) {
-      removeEntry(malId);
-      return;
-    }
-
-    setEntriesById((prev) => {
-      const existing = prev[malId];
-      if (!existing) {
-        return prev;
-      }
-
-      if (existing.status === status) {
-        return prev;
-      }
-
-      return {
-        ...prev,
-        [malId]: {
-          ...existing,
-          status,
-          updatedAt: Date.now(),
-        },
-      };
-    });
-  }, [removeEntry]);
-
-  const updateEntryProgress = useCallback((malId, value, type = 'episodes') => {
-    if (malId == null) {
-      return;
-    }
-
-    setEntriesById((prev) => {
-      const existing = prev[malId];
-      if (!existing) {
-        return prev;
+  const updateEntryProgress = useCallback(
+    (malId, value, type = 'episodes') => {
+      if (malId == null) {
+        return;
       }
 
       const sanitizedValue =
@@ -185,38 +327,54 @@ export const LibraryProvider = ({ children }) => {
           ? Math.floor(value)
           : 0;
 
-      const nextProgress = {
-        ...(existing.progress && typeof existing.progress === 'object'
-          ? existing.progress
-          : initializeProgress()),
-      };
+      let didUpdate = false;
+      setEntriesById((prev) => {
+        const existing = prev[malId];
+        if (!existing) {
+          return prev;
+        }
 
-      if (type === 'chapters') {
-        nextProgress.readChapters = sanitizedValue;
-      } else {
-        nextProgress.watchedEpisodes = sanitizedValue;
+        const currentProgress = ensureProgressShape(existing.progress);
+        const progressKey = type === 'chapters' ? 'readChapters' : 'watchedEpisodes';
+
+        if (currentProgress[progressKey] === sanitizedValue) {
+          return prev;
+        }
+
+        didUpdate = true;
+        const updatedProgress = {
+          ...currentProgress,
+          [progressKey]: sanitizedValue,
+        };
+
+        return {
+          ...prev,
+          [malId]: {
+            ...existing,
+            progress: updatedProgress,
+            updatedAt: Date.now(),
+          },
+        };
+      });
+
+      if (didUpdate && userId) {
+        updateProgressMutation({
+          userId,
+          malId,
+          value: sanitizedValue,
+          type,
+        }).catch((error) => {
+          console.error('Failed to update library progress', error);
+        });
       }
+    },
+    [updateProgressMutation, userId]
+  );
 
-      return {
-        ...prev,
-        [malId]: {
-          ...existing,
-          progress: nextProgress,
-          updatedAt: Date.now(),
-        },
-      };
-    });
-  }, []);
-
-  const updateEntryRating = useCallback((malId, rating) => {
-    if (malId == null) {
-      return;
-    }
-
-    setEntriesById((prev) => {
-      const existing = prev[malId];
-      if (!existing) {
-        return prev;
+  const updateEntryRating = useCallback(
+    (malId, rating) => {
+      if (malId == null) {
+        return;
       }
 
       const sanitizedRating =
@@ -224,16 +382,40 @@ export const LibraryProvider = ({ children }) => {
           ? Math.min(10, Math.round(rating * 10) / 10)
           : null;
 
-      return {
-        ...prev,
-        [malId]: {
-          ...existing,
+      let didUpdate = false;
+      setEntriesById((prev) => {
+        const existing = prev[malId];
+        if (!existing) {
+          return prev;
+        }
+
+        if (existing.rating === sanitizedRating) {
+          return prev;
+        }
+
+        didUpdate = true;
+        return {
+          ...prev,
+          [malId]: {
+            ...existing,
+            rating: sanitizedRating,
+            updatedAt: Date.now(),
+          },
+        };
+      });
+
+      if (didUpdate && userId) {
+        updateRatingMutation({
+          userId,
+          malId,
           rating: sanitizedRating,
-          updatedAt: Date.now(),
-        },
-      };
-    });
-  }, []);
+        }).catch((error) => {
+          console.error('Failed to update library rating', error);
+        });
+      }
+    },
+    [updateRatingMutation, userId]
+  );
 
   const resetLibrary = useCallback(() => {
     setEntriesById({});
@@ -269,6 +451,7 @@ export const LibraryProvider = ({ children }) => {
       statusOrder: LIBRARY_STATUS_ORDER,
       defaultStatus: DEFAULT_STATUS,
       resolveStatusLabel,
+      userId,
     }),
     [
       entriesById,
@@ -279,6 +462,7 @@ export const LibraryProvider = ({ children }) => {
       updateEntryRating,
       resetLibrary,
       resolveStatusLabel,
+      userId,
     ]
   );
 
