@@ -22,7 +22,7 @@ const tools = [
     title: 'Scene Finder',
     description: 'Upload an image to find which anime it\'s from.',
     icon: <Ionicons name="camera-outline" size={32} color="#fcbf49" />,
-    action: () => console.log('Navigate to Anime Trace'),
+    action: () => router.push('/tools/scene-finder'),
   },
   {
     key: 'meme-feed',
@@ -79,7 +79,7 @@ const cardWidth = (width - 60) / 2; // Screen width - horizontal padding - gap
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#121212',
+    backgroundColor: '#0F1719',
     paddingTop: 60,
   },
   header: {
@@ -96,7 +96,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   card: {
-    backgroundColor: '#1f1f1f',
+    backgroundColor: '#1E2A3A',
     borderRadius: 12,
     padding: 20,
     width: cardWidth,
