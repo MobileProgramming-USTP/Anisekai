@@ -49,6 +49,10 @@ const SCOPE_SECTION_COMPONENTS = {
   [SCOPE_VALUES.USERS]: UserSections,
 };
 
+const SEARCH_CACHE_TTL_MS = 5 * 60 * 1000;
+const SEARCH_DEBOUNCE_MS = 220;
+const MAX_SEARCH_CACHE_ENTRIES = 40;
+
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const resolveSectionEndpoint = (section, page) => {
@@ -247,6 +251,8 @@ const ExploreScreen = () => {
   const [statusPickerVisible, setStatusPickerVisible] = useState(false);
   const [statusSelection, setStatusSelection] = useState(null);
   const [scopeDataCache, setScopeDataCache] = useState({});
+  // Cache search results per scope to speed up repeated queries.
+  const searchCacheRef = useRef(new Map());
   const requestIdRef = useRef(0);
   const detailAbortRef = useRef(null);
   const detailTimeoutRef = useRef(null);
@@ -640,43 +646,75 @@ const ExploreScreen = () => {
   };
 
   useEffect(() => {
-    if (!searchQuery.trim()) {
+    const trimmedQuery = searchQuery.trim();
+    if (!trimmedQuery) {
       setSearchResults([]);
       setSearchError(null);
       setSearchLoading(false);
       return;
     }
 
-    const url = buildSearchUrl(activeScope, searchQuery);
+    const url = buildSearchUrl(activeScope, trimmedQuery);
     if (!url) {
       setSearchResults([]);
       setSearchLoading(false);
       return;
     }
 
+    const cacheKey = `${activeScope}:${trimmedQuery.toLowerCase()}`;
+    const cached = searchCacheRef.current.get(cacheKey);
+    const now = Date.now();
+    if (cached && now - cached.timestamp < SEARCH_CACHE_TTL_MS) {
+      setSearchResults(cached.results);
+      setSearchError(null);
+      setSearchLoading(false);
+      return;
+    }
+
+    let isActive = true;
     const controller = new AbortController();
+    setSearchLoading(true);
+    setSearchError(null);
+
     const timeoutId = setTimeout(async () => {
       try {
-        setSearchLoading(true);
-        setSearchError(null);
-
         const data = await fetchJsonWithRetry(url, {
           signal: controller.signal,
           retries: 1,
           backoff: 800,
         });
-        setSearchResults(data?.data ?? []);
-      } catch (e) {
-        if (e.name !== 'AbortError') {
-          setSearchError(`Failed to search ${activeScopeLabel.toLowerCase()}.`);
-          console.error(e);
+
+        if (!isActive) {
+          return;
         }
+
+        const results = data?.data ?? [];
+        const cache = searchCacheRef.current;
+        if (cache.size >= MAX_SEARCH_CACHE_ENTRIES) {
+          const oldestKey = cache.keys().next().value;
+          if (oldestKey) {
+            cache.delete(oldestKey);
+          }
+        }
+
+        cache.set(cacheKey, { results, timestamp: Date.now() });
+        setSearchResults(results);
+      } catch (e) {
+        if (!isActive || e.name === 'AbortError') {
+          return;
+        }
+
+        setSearchError(`Failed to search ${activeScopeLabel.toLowerCase()}.`);
+        console.error(e);
       } finally {
-        setSearchLoading(false);
+        if (isActive) {
+          setSearchLoading(false);
+        }
       }
-    }, 350);
+    }, SEARCH_DEBOUNCE_MS);
 
     return () => {
+      isActive = false;
       controller.abort();
       clearTimeout(timeoutId);
     };
