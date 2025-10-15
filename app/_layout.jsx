@@ -11,26 +11,43 @@ const resolveConvexUrl = () => {
   }
 
   const extras = Constants?.expoConfig?.extra ?? {};
-  const requestedEnv = (
+  const requestedEnvRaw =
     process.env.EXPO_PUBLIC_CONVEX_ENV ||
     extras.convexDefaultEnv ||
-    (__DEV__ ? "development" : "production")
-  ).toLowerCase();
+    (__DEV__ ? "development" : "production");
 
-  if (requestedEnv === "production" && typeof extras.convexProdUrl === "string" && extras.convexProdUrl.length > 0) {
+  const requestedEnv = requestedEnvRaw.toLowerCase();
+
+  if (requestedEnv === "production") {
+    if (typeof extras.convexProdUrl === "string" && extras.convexProdUrl.length > 0) {
+      return extras.convexProdUrl;
+    }
+    throw new Error("Production Convex URL (convexProdUrl) is not configured.");
+  }
+
+  if (requestedEnv === "development") {
+    if (typeof extras.convexDevUrl === "string" && extras.convexDevUrl.length > 0) {
+      return extras.convexDevUrl;
+    }
+    console.warn("convexDevUrl is not configured; falling back to production Convex URL.");
     return extras.convexProdUrl;
   }
 
-  if (requestedEnv === "development" && typeof extras.convexDevUrl === "string" && extras.convexDevUrl.length > 0) {
-    return extras.convexDevUrl;
+  console.warn(
+    `Unknown Convex environment "${requestedEnvRaw}", defaulting to ${
+      __DEV__ ? "development" : "production"
+    }.`
+  );
+
+  if (__DEV__) {
+    if (typeof extras.convexDevUrl === "string" && extras.convexDevUrl.length > 0) {
+      return extras.convexDevUrl;
+    }
+    console.warn("convexDevUrl is not configured; falling back to production Convex URL.");
   }
 
   if (typeof extras.convexProdUrl === "string" && extras.convexProdUrl.length > 0) {
     return extras.convexProdUrl;
-  }
-
-  if (typeof extras.convexDevUrl === "string" && extras.convexDevUrl.length > 0) {
-    return extras.convexDevUrl;
   }
 
   return undefined;
