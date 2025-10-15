@@ -1,12 +1,22 @@
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import axios from 'axios';
-import * as ImagePicker from 'expo-image-picker';
-import { Stack } from 'expo-router';
-import { Video } from 'expo-video';
-import { useState } from 'react';
-import { ActivityIndicator, Alert, Dimensions, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import axios from "axios";
+import * as DocumentPicker from "expo-document-picker";
+import { Stack } from "expo-router";
+import { Video } from "expo-video";
+import { useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  Dimensions,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 
-const TRACE_API_URL = 'https://api.trace.moe/search';
+const TRACE_API_URL = "https://api.trace.moe/search";
 
 const SceneFinderScreen = () => {
   const [selectedImage, setSelectedImage] = useState(null);
@@ -14,27 +24,26 @@ const SceneFinderScreen = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const [permission, requestPermission] = ImagePicker.useMediaLibraryPermissions();
-
   const handlePickImage = async () => {
-    if (!permission?.granted) {
-      const { status } = await requestPermission();
-      if (status !== 'granted') {
-        Alert.alert('Permission required', 'We need permission to access your photos.');
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: "image/*",
+        copyToCacheDirectory: true,
+      });
+
+      if (result.canceled) return;
+
+      const file = result.assets?.[0];
+      if (!file) {
+        Alert.alert("Error", "No image selected.");
         return;
       }
-    }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaType.Image,
-      allowsEditing: true,
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      const imageUri = result.assets[0].uri;
-      setSelectedImage(imageUri);
-      handleSearch(imageUri);
+      setSelectedImage(file.uri);
+      handleSearch(file.uri);
+    } catch (err) {
+      console.error(err);
+      Alert.alert("Error", "Failed to pick an image.");
     }
   };
 
@@ -45,24 +54,24 @@ const SceneFinderScreen = () => {
       setSearchResult(null);
 
       const formData = new FormData();
-      formData.append('image', {
+      formData.append("image", {
         uri: imageUri,
-        type: 'image/jpeg',
-        name: 'upload.jpg',
+        type: "image/jpeg",
+        name: "upload.jpg",
       });
 
       const response = await axios.post(TRACE_API_URL, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+        headers: { "Content-Type": "multipart/form-data" },
       });
 
-      if (response.data && response.data.result && response.data.result.length > 0) {
+      if (response.data?.result?.length > 0) {
         setSearchResult(response.data.result[0]);
       } else {
         setError("Couldn't find a match. Try a different image.");
       }
     } catch (e) {
-      setError("An error occurred during the search. Please try again.");
       console.error(e);
+      setError("An error occurred during the search. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -74,172 +83,237 @@ const SceneFinderScreen = () => {
     setError(null);
     setLoading(false);
   };
-  
+
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
+
   const renderContent = () => {
     if (loading) {
-      return <ActivityIndicator size="large" color="#fcbf49" style={styles.contentArea} />;
-    }
-
-    if (error) {
-      return <Text style={[styles.contentArea, styles.errorText]}>{error}</Text>;
-    }
-
-    if (searchResult) {
-      const { anilist, episode, similarity, video } = searchResult;
-      const title = anilist.title.romaji || anilist.title.english;
-      const similarityPercent = (similarity * 100).toFixed(2);
-
       return (
-        <View style={styles.resultContainer}>
-          <Video
-            source={{ uri: video }}
-            style={styles.videoPreview}
-            useNativeControls={false}
-            resizeMode="contain"
-            isLooping
-            isMuted
-            shouldPlay // Replaced with playing={true} for newer versions
-          />
-          <View style={styles.resultTextContainer}>
-            <Text style={styles.resultTitle}>{title}</Text>
-            <Text style={styles.resultInfo}>Episode: {episode || 'N/A'}</Text>
-            <Text style={styles.resultInfo}>Similarity: {similarityPercent}%</Text>
+        <View style={styles.loadingContainer}>
+          <View style={styles.loadingCard}>
+            <ActivityIndicator size="large" color="#fcbf49" />
+            <Text style={styles.loadingText}>Searching anime database...</Text>
+            <Text style={styles.loadingSubtext}>This may take a few seconds</Text>
           </View>
         </View>
       );
     }
 
-    // This is the new placeholder to fill the blank space
+    if (error) {
+      return (
+        <View style={styles.errorContainer}>
+          <View style={styles.errorCard}>
+            <Ionicons name="sad-outline" size={64} color="#ff6b6b" />
+            <Text style={styles.errorTitle}>Oops!</Text>
+            <Text style={styles.errorText}>{error}</Text>
+            <Text style={styles.errorHint}>Try uploading a clear anime screenshot</Text>
+          </View>
+        </View>
+      );
+    }
+
+    if (searchResult) {
+      const { anilist, episode, similarity, video, from, to } = searchResult || {};
+      const title =
+        anilist?.title?.romaji ||
+        anilist?.title?.english ||
+        anilist?.title?.native ||
+        "Unknown Title";
+      const similarityPercent = (similarity * 100).toFixed(1);
+      const isHighConfidence = similarity > 0.9;
+
+      return (
+        <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+          {selectedImage && (
+            <Image source={{ uri: selectedImage }} style={styles.previewImage} resizeMode="cover" />
+          )}
+
+          <View style={styles.resultContainer}>
+            <View
+              style={[
+                styles.confidenceBadge,
+                isHighConfidence ? styles.highConfidence : styles.lowConfidence,
+              ]}
+            >
+              <Ionicons
+                name={isHighConfidence ? "checkmark-circle" : "help-circle"}
+                size={16}
+                color={isHighConfidence ? "#4ade80" : "#fbbf24"}
+              />
+              <Text style={styles.confidenceText}>{similarityPercent}% Match</Text>
+            </View>
+
+            {video ? (
+              <View style={styles.videoContainer}>
+                <Video
+                  source={{ uri: video }}
+                  style={styles.videoPreview}
+                  useNativeControls
+                  resizeMode="contain"
+                  shouldPlay
+                  isLooping
+                />
+              </View>
+            ) : null}
+
+            <View style={styles.resultInfo}>
+              <Text style={styles.resultTitle}>{title}</Text>
+
+              <View style={styles.infoRow}>
+                <View style={styles.infoItem}>
+                  <Ionicons name="film-outline" size={18} color="#fcbf49" />
+                  <Text style={styles.infoLabel}>Episode</Text>
+                  <Text style={styles.infoValue}>{episode || "N/A"}</Text>
+                </View>
+
+                {from && to && (
+                  <View style={styles.infoItem}>
+                    <Ionicons name="time-outline" size={18} color="#fcbf49" />
+                    <Text style={styles.infoLabel}>Timestamp</Text>
+                    <Text style={styles.infoValue}>
+                      {formatTime(from)} - {formatTime(to)}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </View>
+          </View>
+        </ScrollView>
+      );
+    }
+
     return (
-      <View style={[styles.contentArea, styles.placeholderContainer]}>
-        <MaterialCommunityIcons name="image-search-outline" size={80} color="#2a2a2a" />
-        <Text style={styles.placeholderText}>Ready to find that scene?</Text>
+      <View style={styles.placeholderContainer}>
+        <MaterialCommunityIcons name="image-search-outline" size={80} color="#fcbf49" />
+        <Text style={styles.placeholderTitle}>Find Your Anime Scene</Text>
+        <Text style={styles.placeholderText}>
+          Upload an image or screenshot from any anime scene to identify it.
+        </Text>
       </View>
     );
   };
 
   return (
     <View style={styles.container}>
-      <Stack.Screen options={{ title: 'Scene Finder' }} />
-      
-      <View style={styles.titleContainer}>
+      <Stack.Screen
+        options={{
+          title: "Scene Finder",
+          headerStyle: { backgroundColor: "#121212" },
+          headerTintColor: "#fff",
+        }}
+      />
+      <View style={styles.header}>
         <Text style={styles.title}>Scene Finder</Text>
-        <Text style={styles.subtitle}>Upload a screenshot to find what anime it's from!</Text>
+        <Text style={styles.subtitle}>Identify any anime from a single screenshot</Text>
       </View>
-      
-      {renderContent()}
 
-      <Pressable 
-        style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]} 
-        onPress={searchResult || error ? resetSearch : handlePickImage}
-        disabled={loading}
-      >
-        <Ionicons name={searchResult || error ? "refresh" : "image-outline"} size={20} color="#121212" />
-        <Text style={styles.buttonText}>{searchResult || error ? "Search Again" : "Upload Image"}</Text>
-      </Pressable>
+      <View style={styles.contentWrapper}>{renderContent()}</View>
+
+      <View style={styles.buttonContainer}>
+        {!selectedImage ? (
+          <Pressable
+            style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
+            onPress={handlePickImage}
+          >
+            <Ionicons name="image-outline" size={24} color="#121212" />
+            <Text style={styles.buttonText}>Pick Image</Text>
+          </Pressable>
+        ) : (
+          <Pressable
+            style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
+            onPress={resetSearch}
+          >
+            <Ionicons name="refresh" size={24} color="#121212" />
+            <Text style={styles.buttonText}>Reset</Text>
+          </Pressable>
+        )}
+      </View>
     </View>
   );
-}
+};
 
 export default SceneFinderScreen;
 
-const { width } = Dimensions.get('window');
-const resultWidth = width - 40;
+const { width } = Dimensions.get("window");
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#121212',
-    padding: 20,
-    paddingBottom: 40,
-  },
-  titleContainer: {
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  title: {
-    color: 'white',
-    fontSize: 28,
-    fontWeight: 'bold',
-  },
-  subtitle: {
-    color: 'gray',
-    fontSize: 16,
-    marginTop: 5,
-    textAlign: 'center',
-  },
-  contentArea: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  placeholderContainer: {
-    width: resultWidth,
-    height: resultWidth,
-    backgroundColor: '#1f1f1f',
+  container: { flex: 1, backgroundColor: "#121212" },
+  header: { padding: 20, borderBottomWidth: 1, borderBottomColor: "rgba(255,255,255,0.05)" },
+  title: { color: "#fcbf49", fontSize: 32, fontWeight: "bold" },
+  subtitle: { color: "#9ca3af", fontSize: 15, marginTop: 6 },
+  contentWrapper: { flex: 1 },
+  scrollView: { flex: 1 },
+  scrollContent: { padding: 20 },
+  loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center", padding: 20 },
+  loadingCard: { backgroundColor: "#1f1f1f", borderRadius: 20, padding: 40, alignItems: "center" },
+  loadingText: { color: "white", fontSize: 18, fontWeight: "600", marginTop: 20 },
+  loadingSubtext: { color: "#9ca3af", fontSize: 14, marginTop: 8 },
+  errorContainer: { flex: 1, justifyContent: "center", alignItems: "center", padding: 20 },
+  errorCard: { backgroundColor: "#1f1f1f", borderRadius: 20, padding: 32, alignItems: "center" },
+  errorTitle: { color: "#ff6b6b", fontSize: 24, fontWeight: "bold", marginTop: 16 },
+  errorText: { color: "#e5e7eb", fontSize: 16, textAlign: "center", marginTop: 8 },
+  errorHint: { color: "#9ca3af", fontSize: 14, textAlign: "center", marginTop: 12 },
+  placeholderContainer: { flex: 1, justifyContent: "center", alignItems: "center", padding: 20 },
+  placeholderTitle: { color: "white", fontSize: 24, fontWeight: "bold", textAlign: "center", marginTop: 12 },
+  placeholderText: { color: "#9ca3af", fontSize: 15, textAlign: "center", marginBottom: 24 },
+  previewImage: {
+    width: width - 40,
+    height: 200,
     borderRadius: 12,
-    borderWidth: 2,
-    borderColor: '#2a2a2a',
-    borderStyle: 'dashed',
-  },
-  placeholderText: {
-    marginTop: 15,
-    color: '#4a4a4a',
-    fontSize: 16,
-    fontWeight: '600',
+    marginBottom: 16,
+    alignSelf: "center",
   },
   resultContainer: {
-    width: resultWidth,
-    borderRadius: 12,
-    backgroundColor: '#1f1f1f',
-    overflow: 'hidden',
+    backgroundColor: "#1f1f1f",
+    borderRadius: 20,
+    overflow: "hidden",
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: "rgba(255,255,255,0.1)",
   },
-  videoPreview: {
-    width: '100%',
-    height: resultWidth * (9 / 16),
+  confidenceBadge: {
+    position: "absolute",
+    top: 16,
+    right: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "rgba(0,0,0,0.8)",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    zIndex: 10,
   },
-  resultTextContainer: {
-    padding: 15,
+  highConfidence: { borderColor: "rgba(74,222,128,0.3)" },
+  lowConfidence: { borderColor: "rgba(251,191,36,0.3)" },
+  confidenceText: { color: "white", fontSize: 13, fontWeight: "600" },
+  videoContainer: { width: "100%", aspectRatio: 16 / 9, backgroundColor: "#000" },
+  videoPreview: { width: "100%", height: "100%" },
+  resultInfo: { padding: 20 },
+  resultTitle: { color: "white", fontSize: 22, fontWeight: "bold", marginBottom: 20 },
+  infoRow: { flexDirection: "row", gap: 16, marginBottom: 16 },
+  infoItem: {
+    flex: 1,
+    backgroundColor: "rgba(252,191,73,0.05)",
+    padding: 16,
+    borderRadius: 12,
   },
-  resultTitle: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  resultInfo: {
-    color: 'lightgray',
-    fontSize: 14,
-    marginTop: 5,
-  },
-  errorText: {
-    color: '#ff4d4d',
-    fontSize: 16,
-    textAlign: 'center'
-  },
+  infoLabel: { color: "#9ca3af", fontSize: 12, marginTop: 6 },
+  infoValue: { color: "white", fontSize: 16, fontWeight: "600" },
+  buttonContainer: { padding: 20, borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.05)" },
   button: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fcbf49',
-    paddingVertical: 15,
-    paddingHorizontal: 30,
-    borderRadius: 30,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.30,
-    shadowRadius: 4.65,
-    elevation: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#fcbf49",
+    paddingVertical: 18,
+    borderRadius: 16,
+    gap: 12,
   },
-  buttonPressed: {
-    opacity: 0.8,
-  },
-  buttonText: {
-    color: '#121212',
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginLeft: 10,
-  },
+  buttonPressed: { opacity: 0.85, transform: [{ scale: 0.98 }] },
+  buttonText: { color: "#121212", fontSize: 17, fontWeight: "bold" },
 });
+
