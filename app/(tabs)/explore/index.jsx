@@ -431,6 +431,72 @@ const ExploreScreen = () => {
     }
   };
 
+  const handleSelectCharacter = async (item) => {
+    if (!item?.mal_id) {
+      return;
+    }
+
+    let currentRequestId;
+    try {
+      currentRequestId = requestIdRef.current + 1;
+      requestIdRef.current = currentRequestId;
+      if (detailAbortRef.current) {
+        detailAbortRef.current.abort();
+      }
+      if (detailTimeoutRef.current) {
+        clearTimeout(detailTimeoutRef.current);
+        detailTimeoutRef.current = null;
+      }
+      const controller = new AbortController();
+      detailAbortRef.current = controller;
+      detailTimeoutRef.current = setTimeout(() => {
+        if (detailAbortRef.current === controller) {
+          controller.abort();
+        }
+      }, 10000);
+      setDetailLoading(true);
+      setDetailError(null);
+      setSelectedDetail({ ...item });
+      setSelectedDetailScope(SCOPE_VALUES.CHARACTERS);
+      setViewAllSection(null);
+      setGenrePickerOpen(false);
+
+      const data = await fetchJsonWithRetry(
+        `${JIKAN_API_URL}/characters/${item.mal_id}/full`,
+        {
+          retries: 3,
+          signal: controller.signal,
+        }
+      );
+      if (requestIdRef.current === currentRequestId) {
+        setSelectedDetail(data.data);
+        setSelectedDetailScope(SCOPE_VALUES.CHARACTERS);
+      }
+    } catch (e) {
+      if (requestIdRef.current === currentRequestId) {
+        const friendlyMessage =
+          e?.name === 'AbortError'
+            ? 'Request canceled. Please try again.'
+            : typeof e?.message === 'string' && e.message.includes('429')
+            ? 'Rate limit reached. Please try again shortly.'
+            : 'Failed to load details.';
+        setDetailError(friendlyMessage);
+        console.error(e);
+      }
+    } finally {
+      if (requestIdRef.current === currentRequestId) {
+        if (detailTimeoutRef.current) {
+          clearTimeout(detailTimeoutRef.current);
+          detailTimeoutRef.current = null;
+        }
+        if (detailAbortRef.current) {
+          detailAbortRef.current = null;
+        }
+        setDetailLoading(false);
+      }
+    }
+  };
+
   useEffect(() => {
     if (!selectedDetail && !detailLoading && !detailError) {
       return;
@@ -750,6 +816,8 @@ const ExploreScreen = () => {
         ? handleSelectAnime
         : activeScope === SCOPE_VALUES.MANGA
         ? handleSelectManga
+        : activeScope === SCOPE_VALUES.CHARACTERS
+        ? handleSelectCharacter
         : undefined;
 
     const keyExtractor = (item, index) => getItemKey(item, index, key);
@@ -809,6 +877,96 @@ const ExploreScreen = () => {
   if (selectedDetail) {
     const isAnimeDetail = selectedDetailScope === SCOPE_VALUES.ANIME;
     const isMangaDetail = selectedDetailScope === SCOPE_VALUES.MANGA;
+    const isCharacterDetail = selectedDetailScope === SCOPE_VALUES.CHARACTERS;
+
+    if (isCharacterDetail) {
+      const characterName =
+        selectedDetail.name || selectedDetail.title || 'Unknown Character';
+      const coverImage =
+        selectedDetail.images?.jpg?.image_url ||
+        selectedDetail.images?.webp?.image_url ||
+        selectedDetail.images?.jpg?.large_image_url;
+      const favoritesCount =
+        typeof selectedDetail.favorites === 'number'
+          ? selectedDetail.favorites
+          : null;
+      const favoritesText =
+        favoritesCount != null
+          ? `${favoritesCount.toLocaleString()} favorites`
+          : 'Favorites data unavailable.';
+      const nicknameList = Array.isArray(selectedDetail.nicknames)
+        ? selectedDetail.nicknames.filter(Boolean)
+        : [];
+      const aliasText =
+        nicknameList.length > 0
+          ? nicknameList.join(', ')
+          : 'No alternative names listed.';
+      const aboutRaw =
+        typeof selectedDetail.about === 'string'
+          ? selectedDetail.about.trim()
+          : '';
+      const aboutText =
+        aboutRaw.length > 0
+          ? aboutRaw.replace(/\r?\n/g, '\n\n')
+          : 'No additional information available.';
+      const kanjiName =
+        typeof selectedDetail.name_kanji === 'string'
+          ? selectedDetail.name_kanji.trim()
+          : '';
+
+      return (
+        <ScrollView
+          style={styles.container}
+          contentContainerStyle={styles.detailScrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.detailCard}>
+            <View style={styles.detailCoverWrapper}>
+              {coverImage ? (
+                <ExpoImage
+                  source={{ uri: coverImage }}
+                  style={styles.detailCoverImage}
+                  contentFit="cover"
+                  transition={200}
+                  cachePolicy="memory-disk"
+                />
+              ) : (
+                <View style={[styles.detailCoverImage, styles.cardImageFallback]}>
+                  <Ionicons name="image-outline" size={28} color="#6f7a89" />
+                </View>
+              )}
+            </View>
+            <View style={[styles.detailHeaderInfo, styles.characterHeaderInfo]}>
+              <Text style={styles.detailTitle}>{characterName}</Text>
+              {kanjiName ? (
+                <Text style={styles.detailSubtitle}>{kanjiName}</Text>
+              ) : null}
+              <View style={styles.detailMetaRow}>
+                <Ionicons name="heart" size={18} color="#f55f5f" />
+                <Text style={styles.detailMetaText}>{favoritesText}</Text>
+              </View>
+              {nicknameList.length > 0 ? (
+                <View style={styles.characterAliasContainer}>
+                  <Text style={styles.characterAliasLabel}>A.K.A</Text>
+                  <Text style={styles.characterAliasText}>{aliasText}</Text>
+                </View>
+              ) : null}
+            </View>
+          </View>
+
+          {detailError ? (
+            <Text style={[styles.errorText, styles.detailInlineError]}>
+              {detailError}
+            </Text>
+          ) : null}
+
+          <View style={styles.detailSummarySection}>
+            <Text style={styles.detailSectionHeading}>About</Text>
+            <Text style={styles.detailSummaryText}>{aboutText}</Text>
+          </View>
+        </ScrollView>
+      );
+    }
 
     const coverImage =
       selectedDetail.images?.jpg?.large_image_url ||
@@ -851,52 +1009,52 @@ const ExploreScreen = () => {
     const lengthIcon = isAnimeDetail ? 'albums-outline' : 'book-outline';
     const creatorsIcon = isAnimeDetail ? 'business-outline' : 'person-outline';
 
-  const handleOpenStatusPicker = () => {
-    if (!selectedDetail?.mal_id) {
-      return;
-    }
+    const handleOpenStatusPicker = () => {
+      if (!selectedDetail?.mal_id) {
+        return;
+      }
 
-    if (
-      selectedDetailScope !== SCOPE_VALUES.ANIME &&
-      selectedDetailScope !== SCOPE_VALUES.MANGA
-    ) {
-      return;
-    }
+      if (
+        selectedDetailScope !== SCOPE_VALUES.ANIME &&
+        selectedDetailScope !== SCOPE_VALUES.MANGA
+      ) {
+        return;
+      }
 
-    const existing = libraryEntriesById[selectedDetail.mal_id];
-    setStatusSelection(existing?.status ?? libraryDefaultStatus);
-    setStatusPickerVisible(true);
-  };
+      const existing = libraryEntriesById[selectedDetail.mal_id];
+      setStatusSelection(existing?.status ?? libraryDefaultStatus);
+      setStatusPickerVisible(true);
+    };
 
-  const closeStatusPicker = () => {
-    setStatusPickerVisible(false);
-    setStatusSelection(null);
-  };
+    const closeStatusPicker = () => {
+      setStatusPickerVisible(false);
+      setStatusSelection(null);
+    };
 
-  const handleConfirmStatusSelection = () => {
-    if (!selectedDetail?.mal_id) {
+    const handleConfirmStatusSelection = () => {
+      if (!selectedDetail?.mal_id) {
+        closeStatusPicker();
+        return;
+      }
+
+      const resolvedStatus = statusSelection || libraryDefaultStatus;
+
+      upsertLibraryEntry(selectedDetail, {
+        status: resolvedStatus,
+        scope: selectedDetailScope,
+      });
       closeStatusPicker();
-      return;
-    }
+    };
 
-    const resolvedStatus = statusSelection || libraryDefaultStatus;
+    const handleRemoveFromLibrary = () => {
+      if (!selectedDetail?.mal_id) {
+        closeStatusPicker();
+        return;
+      }
 
-    upsertLibraryEntry(selectedDetail, {
-      status: resolvedStatus,
-      scope: selectedDetailScope,
-    });
-    closeStatusPicker();
-  };
-
-  const handleRemoveFromLibrary = () => {
-    if (!selectedDetail?.mal_id) {
+      removeLibraryEntry(selectedDetail.mal_id);
       closeStatusPicker();
-      return;
-    }
-
-    removeLibraryEntry(selectedDetail.mal_id);
-    closeStatusPicker();
-  };
+    };
 
     return (
       <ScrollView
@@ -1240,6 +1398,8 @@ const ExploreScreen = () => {
                       ? handleSelectAnime
                       : activeScope === SCOPE_VALUES.MANGA
                       ? handleSelectManga
+                      : activeScope === SCOPE_VALUES.CHARACTERS
+                      ? handleSelectCharacter
                       : undefined
                   }
                   variant={activeScope === SCOPE_VALUES.USERS ? 'user' : 'grid'}
@@ -1296,11 +1456,20 @@ const styles = StyleSheet.create({
   detailHeaderInfo: {
     flex: 1,
   },
+  characterHeaderInfo: {
+    alignItems: 'flex-start',
+  },
   detailTitle: {
     color: '#E7EDF5',
     fontSize: 24,
     fontWeight: '800',
     marginBottom: 12,
+  },
+  detailSubtitle: {
+    color: '#A5B2C2',
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 10,
   },
   detailMetaRow: {
     flexDirection: 'row',
@@ -1312,6 +1481,26 @@ const styles = StyleSheet.create({
     fontSize: 15,
     marginLeft: 8,
     flexShrink: 1,
+  },
+  characterAliasContainer: {
+    marginTop: 12,
+    alignSelf: 'stretch',
+    alignItems: 'flex-start',
+    maxWidth: '100%',
+  },
+  characterAliasLabel: {
+    color: '#6f7a89',
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    marginBottom: 4,
+  },
+  characterAliasText: {
+    color: '#E7EDF5',
+    fontSize: 14,
+    textAlign: 'left',
+    lineHeight: 18,
   },
   detailInlineSpinner: {
     marginTop: 16,
