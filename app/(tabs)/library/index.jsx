@@ -18,6 +18,7 @@ const SCOPE_OPTIONS = [
 ];
 
 const PREVIEW_COUNT = 10;
+const VIEW_ALL_BUTTON_THRESHOLD = 3;
 
 const resolveEntryCoverImage = (entry) =>
   entry?.coverImage ||
@@ -158,8 +159,14 @@ const LibraryScreen = () => {
   };
 
   const handleStatusSelect = (statusKey) => {
+    if (statusKey && statusKey === selectedStatusKey) {
+      setSelectedStatusKey(null);
+      setViewAllStatusKey(null);
+      return;
+    }
+
     setSelectedStatusKey(statusKey);
-    setViewAllStatusKey(null);
+    setViewAllStatusKey(statusKey || null);
   };
 
   const handleViewAllPress = (statusKey) => {
@@ -219,7 +226,7 @@ const LibraryScreen = () => {
               {(statusInfo.label || statusKey).toUpperCase()}
             </Text>
           </View>
-          {entriesForStatus.length > 0 ? (
+          {entriesForStatus.length >= VIEW_ALL_BUTTON_THRESHOLD || showingAll ? (
             <Pressable onPress={() => handleViewAllPress(statusKey)} hitSlop={6}>
               <Text style={styles.sectionActionText}>
                 {showingAll ? 'Back' : 'View All'}
