@@ -1,0 +1,448 @@
+import { StyleSheet } from 'react-native';
+
+const exploreStyles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#0F1719',
+  },
+  scrollContent: {
+    paddingBottom: 40,
+  },
+  detailScrollContent: {
+    paddingBottom: 60,
+    paddingHorizontal: 20,
+  },
+  detailCard: {
+    marginTop: 60,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  detailCoverWrapper: {
+    width: 140,
+    marginRight: 20,
+  },
+  detailCoverImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: 12,
+    backgroundColor: '#2a2a2a',
+  },
+  detailHeaderInfo: {
+    flex: 1,
+  },
+  characterHeaderInfo: {
+    alignItems: 'flex-start',
+  },
+  detailTitle: {
+    color: '#E7EDF5',
+    fontSize: 24,
+    fontWeight: '800',
+    marginBottom: 12,
+  },
+  detailSubtitle: {
+    color: '#A5B2C2',
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 10,
+  },
+  detailMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  detailMetaText: {
+    color: '#A5B2C2',
+    fontSize: 15,
+    marginLeft: 8,
+    flexShrink: 1,
+  },
+  characterAliasContainer: {
+    marginTop: 12,
+    alignSelf: 'stretch',
+    alignItems: 'flex-start',
+    maxWidth: '100%',
+  },
+  characterAliasLabel: {
+    color: '#6f7a89',
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    marginBottom: 4,
+  },
+  characterAliasText: {
+    color: '#E7EDF5',
+    fontSize: 14,
+    textAlign: 'left',
+    lineHeight: 18,
+  },
+  detailInlineSpinner: {
+    marginTop: 16,
+    alignSelf: 'flex-start',
+  },
+  detailInlineError: {
+    textAlign: 'left',
+    paddingHorizontal: 0,
+    marginTop: 16,
+  },
+  detailGenresSection: {
+    marginTop: 28,
+  },
+  detailSectionHeading: {
+    color: '#A5B2C2',
+    fontSize: 14,
+    fontWeight: '700',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    marginBottom: 14,
+  },
+  detailGenresWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  detailGenreChip: {
+    backgroundColor: '#1E2A3A',
+    borderRadius: 18,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginRight: 10,
+    marginBottom: 10,
+  },
+  detailGenreChipText: {
+    color: '#E7EDF5',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  detailSummarySection: {
+    marginTop: 28,
+  },
+  detailSummaryText: {
+    color: '#E7EDF5',
+    fontSize: 15,
+    lineHeight: 22,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    paddingHorizontal: 20,
+    paddingTop: 60,
+    paddingBottom: 20,
+  },
+  headerTitle: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: '#E7EDF5',
+  },
+  scopeDropdownContainer: {
+    marginLeft: 8,
+    position: 'relative',
+    alignSelf: 'flex-start',
+    zIndex: 5,
+  },
+  scopeButton: {
+    backgroundColor: '#16222E',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  scopeButtonActive: {
+    borderColor: '#fcbf49',
+  },
+  scopeButtonLabel: {
+    color: '#E7EDF5',
+    fontSize: 32,
+    fontWeight: '800',
+    marginRight: 6,
+  },
+  scopeMenu: {
+    position: 'absolute',
+    top: '100%',
+    left: 0,
+    right: 0,
+    marginTop: 10,
+    backgroundColor: '#1E2A3A',
+    borderRadius: 12,
+    paddingVertical: 6,
+    minWidth: 160,
+    shadowColor: '#000',
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 8,
+  },
+  scopeMenuItem: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  scopeMenuItemActive: {
+    backgroundColor: '#263445',
+  },
+  scopeMenuItemLabel: {
+    color: '#A5B2C2',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  scopeMenuItemLabelActive: {
+    color: '#fcbf49',
+  },
+  searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    marginBottom: 16,
+  },
+  searchInputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    backgroundColor: '#152029',
+    borderRadius: 12,
+    height: 42,
+    paddingHorizontal: 14,
+    marginRight: 12,
+  },
+  searchInput: {
+    flex: 1,
+    marginLeft: 10,
+    color: '#E7EDF5',
+    fontSize: 16,
+  },
+  genreButton: {
+    width: 42,
+    height: 42,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: '#152029',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  genreButtonActive: {
+    borderColor: '#fcbf49',
+  },
+  genreChipsContainer: {
+    paddingHorizontal: 20,
+    marginBottom: 16,
+  },
+  genreChipsContent: {
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  genreChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#263445',
+    backgroundColor: '#152029',
+    marginRight: 10,
+  },
+  genreChipActive: {
+    borderColor: '#fcbf49',
+    backgroundColor: 'rgba(252, 191, 73, 0.14)',
+  },
+  genreChipText: {
+    color: '#A5B2C2',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  genreChipTextActive: {
+    color: '#fcbf49',
+  },
+  sectionContainer: {
+    paddingHorizontal: 20,
+    marginBottom: 28,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 14,
+  },
+  sectionTitle: {
+    color: '#A5B2C2',
+    fontSize: 14,
+    fontWeight: '700',
+    letterSpacing: 1,
+  },
+  viewAllText: {
+    color: '#fcbf49',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  gridRow: {
+    justifyContent: 'space-between',
+  },
+  gridList: {
+    paddingBottom: 4,
+  },
+  carouselContent: {
+    paddingRight: 12,
+  },
+  card: {
+    width: 150,
+    marginRight: 12,
+  },
+  cardImage: {
+    width: '100%',
+    height: 210,
+    borderRadius: 12,
+    marginBottom: 10,
+    backgroundColor: '#1E2A3A',
+  },
+  cardImageFallback: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cardText: {
+    color: '#E7EDF5',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  gridCard: {
+    flex: 0.48,
+    marginBottom: 16,
+  },
+  gridCardImage: {
+    width: '100%',
+    aspectRatio: 2 / 3,
+    borderRadius: 12,
+    marginBottom: 10,
+    backgroundColor: '#1E2A3A',
+  },
+  userCard: {
+    flex: 0.48,
+    marginBottom: 16,
+  },
+  userCardImage: {
+    width: '100%',
+    aspectRatio: 1,
+    borderRadius: 12,
+    marginBottom: 12,
+    backgroundColor: '#2a2a2a',
+  },
+  rankBadge: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 2,
+  },
+  rankBadgeText: {
+    color: '#0F1719',
+    fontWeight: '800',
+    fontSize: 11,
+  },
+  centered: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorText: {
+    color: '#ff6b6b',
+    fontSize: 16,
+    textAlign: 'center',
+    paddingHorizontal: 20,
+  },
+  emptyText: {
+    color: '#6f7a89',
+    fontSize: 15,
+    paddingHorizontal: 20,
+  },
+  genreEmptyText: {
+    marginTop: 12,
+  },
+  searchLoader: {
+    marginTop: 12,
+  },
+  searchCount: {
+    color: '#6f7a89',
+    fontSize: 14,
+  },
+  statusModalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 25, 0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 28,
+  },
+  statusModalDismissArea: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+  },
+  statusModalContainer: {
+    width: '100%',
+    maxWidth: 360,
+    backgroundColor: '#152029',
+    borderRadius: 20,
+    paddingHorizontal: 24,
+    paddingVertical: 24,
+  },
+  statusModalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#E7EDF5',
+    marginBottom: 12,
+  },
+  statusOptionsList: {
+    marginBottom: 12,
+  },
+  statusOptionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 6,
+    borderRadius: 12,
+    marginBottom: 6,
+  },
+  statusOptionRowActive: {
+    backgroundColor: 'rgba(252, 191, 73, 0.14)',
+  },
+  statusOptionIndicator: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    borderWidth: 2,
+    marginRight: 14,
+  },
+  statusOptionLabel: {
+    flex: 1,
+    color: '#E7EDF5',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  statusModalActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    marginTop: 8,
+  },
+  statusModalActionText: {
+    color: '#fcbf49',
+    fontSize: 15,
+    fontWeight: '700',
+    marginLeft: 18,
+  },
+  statusModalRemove: {
+    marginRight: 'auto',
+  },
+  statusModalRemoveText: {
+    color: '#FF6B6B',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+});
+
+export default exploreStyles;
