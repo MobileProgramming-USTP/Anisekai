@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   BackHandler,
   FlatList,
+  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -16,6 +17,7 @@ import AnimeSections, { ANIME_SECTION_CONFIG } from '../../../components/explore
 import MangaSections, { MANGA_SECTION_CONFIG } from '../../../components/explore/MangaSections';
 import CharacterSections, { CHARACTER_SECTION_CONFIG } from '../../../components/explore/CharacterSections';
 import UserSections, { USER_SECTION_CONFIG } from '../../../components/explore/UserSections';
+import { useLibrary } from '../../context/LibraryContext';
 
 const JIKAN_API_URL = 'https://api.jikan.moe/v4';
 
@@ -204,7 +206,16 @@ const ExploreScreen = () => {
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState(null);
-  const [libraryEntries, setLibraryEntries] = useState({});
+  const {
+    entriesById: libraryEntriesById,
+    statusMeta: libraryStatusMeta,
+    statusOrder: libraryStatusOrder,
+    upsertEntry: upsertLibraryEntry,
+    removeEntry: removeLibraryEntry,
+    defaultStatus: libraryDefaultStatus,
+  } = useLibrary();
+  const [statusPickerVisible, setStatusPickerVisible] = useState(false);
+  const [statusSelection, setStatusSelection] = useState(null);
   const [scopeDataCache, setScopeDataCache] = useState({});
   const requestIdRef = useRef(0);
   const detailAbortRef = useRef(null);
@@ -261,6 +272,8 @@ const ExploreScreen = () => {
     setDetailError(null);
     setGenrePickerOpen(false);
     closeScopeMenu();
+    setStatusPickerVisible(false);
+    setStatusSelection(null);
   };
 
   const handleSelectAnime = async (item) => {
@@ -268,8 +281,9 @@ const ExploreScreen = () => {
       return;
     }
 
+    let currentRequestId;
     try {
-      const currentRequestId = requestIdRef.current + 1;
+      currentRequestId = requestIdRef.current + 1;
       requestIdRef.current = currentRequestId;
       if (detailAbortRef.current) {
         detailAbortRef.current.abort();
@@ -330,8 +344,9 @@ const ExploreScreen = () => {
       return;
     }
 
+    let currentRequestId;
     try {
-      const currentRequestId = requestIdRef.current + 1;
+      currentRequestId = requestIdRef.current + 1;
       requestIdRef.current = currentRequestId;
       if (detailAbortRef.current) {
         detailAbortRef.current.abort();
@@ -658,6 +673,13 @@ const ExploreScreen = () => {
     }
   }, [viewAllSection, filteredSections]);
 
+  useEffect(() => {
+    if (!selectedDetail) {
+      setStatusPickerVisible(false);
+      setStatusSelection(null);
+    }
+  }, [selectedDetail]);
+
   const renderSection = (section) => {
     if (!section) {
       return null;
@@ -757,9 +779,17 @@ const ExploreScreen = () => {
         : 'Not rated';
     const synopsis = selectedDetail.synopsis?.trim() || 'No summary available.';
     const genres = Array.isArray(selectedDetail.genres) ? selectedDetail.genres : [];
-    const isInLibrary = selectedDetail.mal_id
-      ? Boolean(libraryEntries[selectedDetail.mal_id])
-      : false;
+    const currentLibraryEntry = selectedDetail.mal_id
+      ? libraryEntriesById[selectedDetail.mal_id]
+      : null;
+    const isInLibrary = Boolean(currentLibraryEntry);
+    const libraryStatusLabel = currentLibraryEntry
+      ? libraryStatusMeta?.[currentLibraryEntry.status]?.label || 'In Library'
+      : null;
+    const statusAccentColor = currentLibraryEntry
+      ? libraryStatusMeta?.[currentLibraryEntry.status]?.color || '#f55f5f'
+      : '#A5B2C2';
+    const statusOptions = Array.isArray(libraryStatusOrder) ? libraryStatusOrder : [];
 
     const lengthLabel = isAnimeDetail
       ? typeof selectedDetail.episodes === 'number'
@@ -777,18 +807,52 @@ const ExploreScreen = () => {
     const lengthIcon = isAnimeDetail ? 'albums-outline' : 'book-outline';
     const creatorsIcon = isAnimeDetail ? 'business-outline' : 'person-outline';
 
-    const handleToggleLibrary = () => {
-      if (!selectedDetail.mal_id) return;
-      setLibraryEntries((prev) => {
-        const next = { ...prev };
-        if (next[selectedDetail.mal_id]) {
-          delete next[selectedDetail.mal_id];
-        } else {
-          next[selectedDetail.mal_id] = true;
-        }
-        return next;
-      });
-    };
+  const handleOpenStatusPicker = () => {
+    if (!selectedDetail?.mal_id) {
+      return;
+    }
+
+    if (
+      selectedDetailScope !== SCOPE_VALUES.ANIME &&
+      selectedDetailScope !== SCOPE_VALUES.MANGA
+    ) {
+      return;
+    }
+
+    const existing = libraryEntriesById[selectedDetail.mal_id];
+    setStatusSelection(existing?.status ?? libraryDefaultStatus);
+    setStatusPickerVisible(true);
+  };
+
+  const closeStatusPicker = () => {
+    setStatusPickerVisible(false);
+    setStatusSelection(null);
+  };
+
+  const handleConfirmStatusSelection = () => {
+    if (!selectedDetail?.mal_id) {
+      closeStatusPicker();
+      return;
+    }
+
+    const resolvedStatus = statusSelection || libraryDefaultStatus;
+
+    upsertLibraryEntry(selectedDetail, {
+      status: resolvedStatus,
+      scope: selectedDetailScope,
+    });
+    closeStatusPicker();
+  };
+
+  const handleRemoveFromLibrary = () => {
+    if (!selectedDetail?.mal_id) {
+      closeStatusPicker();
+      return;
+    }
+
+    removeLibraryEntry(selectedDetail.mal_id);
+    closeStatusPicker();
+  };
 
     return (
       <ScrollView
@@ -837,14 +901,22 @@ const ExploreScreen = () => {
               <Text style={styles.detailMetaText}>{scoreLabel}</Text>
             </View>
 
-            <Pressable style={styles.detailMetaRow} onPress={handleToggleLibrary} hitSlop={8}>
+            <Pressable
+              style={styles.detailMetaRow}
+              onPress={handleOpenStatusPicker}
+              hitSlop={8}
+            >
               <Ionicons
                 name={isInLibrary ? 'heart' : 'heart-outline'}
                 size={20}
-                color={isInLibrary ? '#f55f5f' : '#A5B2C2'}
+                color={statusAccentColor}
               />
               <Text style={styles.detailMetaText}>
-                {isInLibrary ? 'Added to Library' : 'Add to Library'}
+                {isInLibrary
+                  ? libraryStatusLabel
+                    ? `In Library (${libraryStatusLabel})`
+                    : 'In Library'
+                  : 'Add to Library'}
               </Text>
             </Pressable>
           </View>
@@ -874,6 +946,68 @@ const ExploreScreen = () => {
           <Text style={styles.detailSectionHeading}>Summary</Text>
           <Text style={styles.detailSummaryText}>{synopsis}</Text>
         </View>
+
+        <Modal
+          visible={statusPickerVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={closeStatusPicker}
+        >
+          <View style={styles.statusModalBackdrop}>
+            <Pressable
+              style={styles.statusModalDismissArea}
+              onPress={closeStatusPicker}
+            />
+            <View style={styles.statusModalContainer}>
+              <Text style={styles.statusModalTitle}>Set Status</Text>
+              <View style={styles.statusOptionsList}>
+                {statusOptions.map((statusKey) => {
+                  const optionMeta = libraryStatusMeta?.[statusKey];
+                  const selected = statusSelection === statusKey;
+                  const optionColor = optionMeta?.color || '#fcbf49';
+
+                  return (
+                    <Pressable
+                      key={statusKey}
+                      style={[styles.statusOptionRow, selected && styles.statusOptionRowActive]}
+                      onPress={() => setStatusSelection(statusKey)}
+                      hitSlop={6}
+                    >
+                      <View
+                        style={[
+                          styles.statusOptionIndicator,
+                          { borderColor: optionColor },
+                          selected && { backgroundColor: optionColor },
+                        ]}
+                      />
+                      <Text style={styles.statusOptionLabel}>
+                        {optionMeta?.label || statusKey}
+                      </Text>
+                      {selected ? <Ionicons name="checkmark" size={18} color="#fcbf49" /> : null}
+                    </Pressable>
+                  );
+                })}
+              </View>
+              <View style={styles.statusModalActions}>
+                {isInLibrary ? (
+                  <Pressable
+                    style={styles.statusModalRemove}
+                    onPress={handleRemoveFromLibrary}
+                    hitSlop={6}
+                  >
+                    <Text style={styles.statusModalRemoveText}>Remove</Text>
+                  </Pressable>
+                ) : null}
+                <Pressable onPress={closeStatusPicker} hitSlop={6}>
+                  <Text style={styles.statusModalActionText}>Cancel</Text>
+                </Pressable>
+                <Pressable onPress={handleConfirmStatusSelection} hitSlop={6}>
+                  <Text style={styles.statusModalActionText}>OK</Text>
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        </Modal>
       </ScrollView>
     );
   }
@@ -1405,5 +1539,80 @@ const styles = StyleSheet.create({
   searchCount: {
     color: '#6f7a89',
     fontSize: 14,
+  },
+  statusModalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 25, 0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 28,
+  },
+  statusModalDismissArea: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+  },
+  statusModalContainer: {
+    width: '100%',
+    maxWidth: 360,
+    backgroundColor: '#152029',
+    borderRadius: 20,
+    paddingHorizontal: 24,
+    paddingVertical: 24,
+  },
+  statusModalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#E7EDF5',
+    marginBottom: 12,
+  },
+  statusOptionsList: {
+    marginBottom: 12,
+  },
+  statusOptionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 6,
+    borderRadius: 12,
+    marginBottom: 6,
+  },
+  statusOptionRowActive: {
+    backgroundColor: 'rgba(252, 191, 73, 0.14)',
+  },
+  statusOptionIndicator: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    borderWidth: 2,
+    marginRight: 14,
+  },
+  statusOptionLabel: {
+    flex: 1,
+    color: '#E7EDF5',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  statusModalActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    marginTop: 8,
+  },
+  statusModalActionText: {
+    color: '#fcbf49',
+    fontSize: 15,
+    fontWeight: '700',
+    marginLeft: 18,
+  },
+  statusModalRemove: {
+    marginRight: 'auto',
+  },
+  statusModalRemoveText: {
+    color: '#FF6B6B',
+    fontSize: 15,
+    fontWeight: '600',
   },
 });

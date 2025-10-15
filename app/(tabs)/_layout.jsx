@@ -1,15 +1,17 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import { Platform, Pressable } from "react-native";
+import { LibraryProvider } from "../context/LibraryContext";
 
 export default function TabsLayout() {
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: "#fcbf49",
-        tabBarInactiveTintColor: "#A5B2C2",
-        tabBarShowLabel: true,
+    <LibraryProvider>
+      <Tabs
+        screenOptions={{
+          headerShown: false,
+          tabBarActiveTintColor: "#fcbf49",
+          tabBarInactiveTintColor: "#A5B2C2",
+          tabBarShowLabel: true,
         tabBarLabelStyle: {
           fontSize: 12,
           fontWeight: "600",
@@ -44,7 +46,7 @@ export default function TabsLayout() {
       />
 
       <Tabs.Screen
-        name="library/index"
+        name="library"
         options={{
           title: "Library",
           tabBarIcon: ({ color, size, focused }) => (
@@ -99,5 +101,6 @@ export default function TabsLayout() {
         }}
       />
     </Tabs>
+  </LibraryProvider>
   );
 }
