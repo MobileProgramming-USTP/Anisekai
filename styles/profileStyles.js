@@ -163,6 +163,99 @@ const profileStyles = StyleSheet.create({
     color: "rgba(255, 255, 255, 0.65)",
     marginTop: theme.spacing.xsmall,
   },
+  sectionTitleUpper: {
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+  },
+  mediaStatsCard: {
+    marginTop: theme.spacing.medium,
+    backgroundColor: "#1E2A3A",
+    borderRadius: 18,
+    paddingHorizontal: theme.spacing.large,
+    paddingVertical: theme.spacing.large,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.05)",
+  },
+  mediaStatsBar: {
+    flexDirection: "row",
+    alignItems: "stretch",
+    height: 16,
+    borderRadius: 999,
+    overflow: "hidden",
+    backgroundColor: "rgba(255, 255, 255, 0.08)",
+  },
+  mediaStatsBarEmpty: {
+    backgroundColor: "rgba(255, 255, 255, 0.08)",
+  },
+  mediaStatsBarSegment: {
+    height: "100%",
+  },
+  mediaStatsLegend: {
+    marginTop: theme.spacing.large,
+  },
+  mediaStatsLegendItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: theme.spacing.small,
+  },
+  mediaStatsDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginRight: theme.spacing.small,
+  },
+  mediaStatsLegendLabel: {
+    flex: 1,
+    color: "#E7EDF5",
+    fontSize: theme.typography.sizes.small,
+    fontWeight: theme.typography.weights.medium,
+  },
+  mediaStatsLegendValue: {
+    color: ACCENT,
+    fontSize: theme.typography.sizes.small,
+    fontWeight: theme.typography.weights.bold,
+  },
+  favoritesList: {
+    paddingVertical: theme.spacing.medium,
+    paddingRight: theme.spacing.large,
+  },
+  favoriteCard: {
+    width: 132,
+    marginRight: theme.spacing.medium,
+    backgroundColor: "#1E2A3A",
+    borderRadius: 18,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.05)",
+  },
+  favoriteCardImage: {
+    width: "100%",
+    height: 168,
+  },
+  favoriteCardPlaceholder: {
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#243042",
+  },
+  favoriteCardPlaceholderText: {
+    fontSize: theme.typography.sizes.large,
+    fontWeight: theme.typography.weights.bold,
+    color: ACCENT,
+  },
+  favoriteCardBody: {
+    paddingHorizontal: theme.spacing.small,
+    paddingVertical: theme.spacing.small,
+  },
+  favoriteCardTitle: {
+    fontSize: theme.typography.sizes.small,
+    fontWeight: theme.typography.weights.bold,
+    color: theme.colors.text,
+  },
+  favoriteCardMeta: {
+    marginTop: 4,
+    fontSize: 13,
+    color: "#A5B2C2",
+  },
   activityList: {
     paddingHorizontal: theme.spacing.large,
     marginTop: theme.spacing.small,
@@ -248,6 +341,9 @@ const profileStyles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.05)",
     marginBottom: theme.spacing.small,
+  },
+  libraryCardFirst: {
+    marginTop: theme.spacing.medium,
   },
   libraryImageWrapper: {
     width: 82,

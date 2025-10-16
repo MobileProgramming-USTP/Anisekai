@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useRouter } from "expo-router";
 import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
 
@@ -13,6 +13,71 @@ const PROFILE_TABS = [
 ];
 
 const AVATAR_PLACEHOLDER = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+
+const MAX_FAVORITES = 6;
+
+const getEntryScore = (entry) => {
+  if (typeof entry?.rating === "number" && Number.isFinite(entry.rating)) {
+    return entry.rating;
+  }
+
+  const fallbackScore = Number(entry?.score);
+  return Number.isFinite(fallbackScore) ? fallbackScore : null;
+};
+
+const pickFavoriteEntries = (collection) => {
+  if (!Array.isArray(collection) || !collection.length) {
+    return [];
+  }
+
+  const ranked = [...collection]
+    .map((entry) => ({
+      entry,
+      score: getEntryScore(entry),
+      updatedAt: typeof entry?.updatedAt === "number" ? entry.updatedAt : 0,
+    }))
+    .sort((a, b) => {
+      const scoreA = a.score ?? Number.NEGATIVE_INFINITY;
+      const scoreB = b.score ?? Number.NEGATIVE_INFINITY;
+      if (scoreA !== scoreB) {
+        return scoreB - scoreA;
+      }
+      return (b.updatedAt ?? 0) - (a.updatedAt ?? 0);
+    });
+
+  const favorites = [];
+  const seen = new Set();
+
+  ranked.forEach(({ entry, score }) => {
+    if (favorites.length >= MAX_FAVORITES) {
+      return;
+    }
+
+    const id = entry?.mal_id ?? entry?.id ?? entry?.title;
+    if (id == null || seen.has(id) || score == null) {
+      return;
+    }
+
+    favorites.push(entry);
+    seen.add(id);
+  });
+
+  ranked.forEach(({ entry }) => {
+    if (favorites.length >= MAX_FAVORITES) {
+      return;
+    }
+
+    const id = entry?.mal_id ?? entry?.id ?? entry?.title;
+    if (id == null || seen.has(id)) {
+      return;
+    }
+
+    favorites.push(entry);
+    seen.add(id);
+  });
+
+  return favorites.slice(0, MAX_FAVORITES);
+};
 
 const formatNumber = (value, fractionDigits = 0) => {
   const numeric =
@@ -36,7 +101,12 @@ const formatNumber = (value, fractionDigits = 0) => {
 const Profile = () => {
   const router = useRouter();
   const { user, signOut } = useAuth();
-  const { entries = [], resolveStatusLabel } = useLibrary();
+  const {
+    entries = [],
+    resolveStatusLabel,
+    statusMeta = {},
+    statusOrder = [],
+  } = useLibrary();
 
   const [activeTab, setActiveTab] = useState("overview");
 
@@ -72,17 +142,9 @@ const Profile = () => {
   }, [entries]);
 
   const stats = useMemo(() => {
-    const pickScore = (entry) => {
-      if (typeof entry?.rating === "number" && Number.isFinite(entry.rating)) {
-        return entry.rating;
-      }
-      const fallbackScore = Number(entry?.score);
-      return Number.isFinite(fallbackScore) ? fallbackScore : null;
-    };
-
     const averageScore = (collection) => {
       const values = collection
-        .map(pickScore)
+        .map(getEntryScore)
         .filter((value) => value != null && Number.isFinite(value));
 
       if (values.length === 0) {
@@ -116,6 +178,95 @@ const Profile = () => {
       ],
     ];
   }, [segregatedEntries]);
+
+  const orderedStatusKeys = useMemo(() => {
+    if (Array.isArray(statusOrder) && statusOrder.length) {
+      return statusOrder;
+    }
+
+    return Object.keys(statusMeta ?? {});
+  }, [statusMeta, statusOrder]);
+
+  const buildStatusData = useCallback(
+    (collection, scopeKey) => {
+      if (!Array.isArray(collection) || !collection.length) {
+        return { total: 0, barSegments: [], legend: [] };
+      }
+
+      const formatStatusName = (value) => {
+        if (typeof value !== "string" || !value.length) {
+          return "Other";
+        }
+        return value.charAt(0).toUpperCase() + value.slice(1);
+      };
+
+      const counts = new Map();
+      collection.forEach((entry) => {
+        const rawStatus =
+          typeof entry?.status === "string" && entry.status.trim()
+            ? entry.status.toLowerCase()
+            : "unknown";
+        counts.set(rawStatus, (counts.get(rawStatus) ?? 0) + 1);
+      });
+
+      const legend = [];
+
+      orderedStatusKeys.forEach((key) => {
+        if (!key) {
+          return;
+        }
+        const meta = statusMeta?.[key] ?? {};
+        const label =
+          resolveStatusLabel?.(key, scopeKey) ?? meta.label ?? formatStatusName(key);
+        const color = meta.color ?? "#4C82FF";
+        const count = counts.get(key) ?? 0;
+        legend.push({ key, label, color, count });
+      });
+
+      counts.forEach((count, key) => {
+        if (legend.some((item) => item.key === key)) {
+          return;
+        }
+
+        const label =
+          resolveStatusLabel?.(key, scopeKey) ??
+          formatStatusName(typeof key === "string" ? key : "Other");
+
+        legend.push({
+          key: key ?? "other",
+          label,
+          color: "#6f7a89",
+          count,
+        });
+      });
+
+      const barSegments = legend.filter((item) => item.count > 0);
+      const total = legend.reduce((sum, item) => sum + item.count, 0);
+
+      return { total, barSegments, legend };
+    },
+    [orderedStatusKeys, resolveStatusLabel, statusMeta],
+  );
+
+  const animeStatusData = useMemo(
+    () => buildStatusData(segregatedEntries.anime, "anime"),
+    [buildStatusData, segregatedEntries.anime],
+  );
+
+  const mangaStatusData = useMemo(
+    () => buildStatusData(segregatedEntries.manga, "manga"),
+    [buildStatusData, segregatedEntries.manga],
+  );
+
+  const favoriteAnimeEntries = useMemo(
+    () => pickFavoriteEntries(segregatedEntries.anime),
+    [segregatedEntries.anime],
+  );
+
+  const favoriteMangaEntries = useMemo(
+    () => pickFavoriteEntries(segregatedEntries.manga),
+    [segregatedEntries.manga],
+  );
 
   const activityItems = useMemo(() => {
     if (!entries.length) {
@@ -164,7 +315,7 @@ const Profile = () => {
       });
   }, [entries, resolveStatusLabel]);
 
-  const renderLibraryCard = (entry, scopeKey) => {
+  const renderLibraryCard = (entry, scopeKey, cardIndex = 0) => {
     const isAnime = scopeKey === "anime";
     const progressValue = isAnime
       ? entry?.progress?.watchedEpisodes ?? 0
@@ -184,7 +335,10 @@ const Profile = () => {
     return (
       <View
         key={`${scopeKey}-${entry?.mal_id ?? entry?.id ?? entry?.title}`}
-        style={styles.libraryCard}
+        style={[
+          styles.libraryCard,
+          cardIndex === 0 && styles.libraryCardFirst,
+        ]}
       >
         <View style={styles.libraryImageWrapper}>
           {entry?.coverImage ? (
@@ -206,6 +360,53 @@ const Profile = () => {
             {resolveStatusLabel?.(entry?.status, entry?.scope) ?? "Status Unknown"} |{" "}
             {formatNumber(progressValue)} / {totalValue} {unit} | {isAnime ? "Anime" : "Manga"}
           </Text>
+        </View>
+      </View>
+    );
+  };
+
+  const renderFavoriteCard = (entry, index, scopeKey = "anime") => {
+    if (!entry) {
+      return null;
+    }
+
+    const cardKey = `favorite-${entry?.mal_id ?? entry?.id ?? entry?.title ?? index}`;
+    const favoriteScore = getEntryScore(entry);
+    const statusLabel = resolveStatusLabel?.(entry?.status, scopeKey) ?? null;
+    const metaParts = [];
+    if (statusLabel) {
+      metaParts.push(statusLabel);
+    }
+    if (favoriteScore != null) {
+      metaParts.push(formatNumber(favoriteScore, 1));
+    }
+    const metaText = metaParts.join(" | ");
+
+    const fallbackInitial =
+      String(entry?.title ?? "?")
+        .trim()
+        .charAt(0)
+        .toUpperCase() || "?";
+
+    return (
+      <View key={cardKey} style={styles.favoriteCard}>
+        {entry?.coverImage ? (
+          <Image
+            source={{ uri: entry.coverImage }}
+            style={styles.favoriteCardImage}
+            resizeMode="cover"
+          />
+        ) : (
+          <View style={[styles.favoriteCardImage, styles.favoriteCardPlaceholder]}>
+            <Text style={styles.favoriteCardPlaceholderText}>{fallbackInitial}</Text>
+          </View>
+        )}
+
+        <View style={styles.favoriteCardBody}>
+          <Text style={styles.favoriteCardTitle} numberOfLines={2}>
+            {entry?.title ?? "Untitled"}
+          </Text>
+          {metaText ? <Text style={styles.favoriteCardMeta}>{metaText}</Text> : null}
         </View>
       </View>
     );
@@ -303,7 +504,9 @@ const Profile = () => {
           </View>
 
           <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, styles.sectionTitleAccent]}>ACTIVITY</Text>
+            <Text style={[styles.sectionTitle, styles.sectionTitleAccent, styles.sectionTitleUpper]}>
+              Activity
+            </Text>
             <Text style={styles.sectionSubtitle}>
               {activityItems.length
                 ? "Latest updates from your library"
@@ -366,37 +569,195 @@ const Profile = () => {
       )}
 
       {activeTab === "anime" && (
-        <View style={styles.sectionBlock}>
-          <Text style={styles.sectionTitle}>Anime List</Text>
-          {segregatedEntries.anime.length ? (
-            segregatedEntries.anime.map((entry) => renderLibraryCard(entry, "anime"))
-          ) : (
-            <View style={styles.emptyStateCard}>
-              <Text style={styles.emptyStateText}>
-                {isSignedIn
-                  ? "Your anime list is empty. Add anime from the Explore tab to start tracking."
-                  : "Sign in to build and view your anime list."}
-              </Text>
-            </View>
-          )}
-        </View>
+        <>
+          <View style={styles.sectionBlock}>
+            <Text style={[styles.sectionTitle, styles.sectionTitleAccent, styles.sectionTitleUpper]}>
+              Anime Stats
+            </Text>
+            {animeStatusData.total ? (
+              <View style={styles.mediaStatsCard}>
+                {animeStatusData.barSegments.length ? (
+                  <View style={styles.mediaStatsBar}>
+                    {animeStatusData.barSegments.map((segment) => (
+                      <View
+                        key={`bar-${segment.key}`}
+                        style={[
+                          styles.mediaStatsBarSegment,
+                          { flex: segment.count, backgroundColor: segment.color },
+                        ]}
+                      />
+                    ))}
+                  </View>
+                ) : (
+                  <View style={[styles.mediaStatsBar, styles.mediaStatsBarEmpty]} />
+                )}
+
+                <View style={styles.mediaStatsLegend}>
+                  {animeStatusData.legend.map((item) => (
+                    <View key={`legend-${item.key}`} style={styles.mediaStatsLegendItem}>
+                      <View
+                        style={[
+                          styles.mediaStatsDot,
+                          { backgroundColor: item.color },
+                        ]}
+                      />
+                      <Text style={styles.mediaStatsLegendLabel}>{item.label}</Text>
+                      <Text style={styles.mediaStatsLegendValue}>{formatNumber(item.count)}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            ) : (
+              <View style={styles.emptyStateCard}>
+                <Text style={styles.emptyStateText}>
+                  {isSignedIn
+                    ? "Add anime to your library to start seeing statistics."
+                    : "Sign in and add anime to track your stats."}
+                </Text>
+              </View>
+            )}
+          </View>
+
+          <View style={styles.sectionBlock}>
+            <Text style={[styles.sectionTitle, styles.sectionTitleAccent, styles.sectionTitleUpper]}>
+              Favorite Animes
+            </Text>
+            {favoriteAnimeEntries.length ? (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.favoritesList}
+              >
+                {favoriteAnimeEntries.map((entry, index) =>
+                  renderFavoriteCard(entry, index, "anime"),
+                )}
+              </ScrollView>
+            ) : (
+              <View style={styles.emptyStateCard}>
+                <Text style={styles.emptyStateText}>
+                  {isSignedIn
+                    ? "Rate your anime or keep watching to build your favorites."
+                    : "Sign in to curate a list of favorite anime."}
+                </Text>
+              </View>
+            )}
+          </View>
+
+          <View style={styles.sectionBlock}>
+            <Text style={[styles.sectionTitle, styles.sectionTitleAccent, styles.sectionTitleUpper]}>
+              Anime List
+            </Text>
+            {segregatedEntries.anime.length ? (
+              segregatedEntries.anime.map((entry, index) =>
+                renderLibraryCard(entry, "anime", index),
+              )
+            ) : (
+              <View style={styles.emptyStateCard}>
+                <Text style={styles.emptyStateText}>
+                  {isSignedIn
+                    ? "Your anime list is empty. Add anime from the Explore tab to start tracking."
+                    : "Sign in to build and view your anime list."}
+                </Text>
+              </View>
+            )}
+          </View>
+        </>
       )}
 
       {activeTab === "manga" && (
-        <View style={styles.sectionBlock}>
-          <Text style={styles.sectionTitle}>Manga List</Text>
-          {segregatedEntries.manga.length ? (
-            segregatedEntries.manga.map((entry) => renderLibraryCard(entry, "manga"))
-          ) : (
-            <View style={styles.emptyStateCard}>
-              <Text style={styles.emptyStateText}>
-                {isSignedIn
-                  ? "Your manga list is empty. Add manga from the Explore tab to start tracking."
-                  : "Sign in to build and view your manga list."}
-              </Text>
-            </View>
-          )}
-        </View>
+        <>
+          <View style={styles.sectionBlock}>
+            <Text style={[styles.sectionTitle, styles.sectionTitleAccent, styles.sectionTitleUpper]}>
+              Manga Stats
+            </Text>
+            {mangaStatusData.total ? (
+              <View style={styles.mediaStatsCard}>
+                {mangaStatusData.barSegments.length ? (
+                  <View style={styles.mediaStatsBar}>
+                    {mangaStatusData.barSegments.map((segment) => (
+                      <View
+                        key={`bar-${segment.key}`}
+                        style={[
+                          styles.mediaStatsBarSegment,
+                          { flex: segment.count, backgroundColor: segment.color },
+                        ]}
+                      />
+                    ))}
+                  </View>
+                ) : (
+                  <View style={[styles.mediaStatsBar, styles.mediaStatsBarEmpty]} />
+                )}
+
+                <View style={styles.mediaStatsLegend}>
+                  {mangaStatusData.legend.map((item) => (
+                    <View key={`legend-${item.key}`} style={styles.mediaStatsLegendItem}>
+                      <View
+                        style={[
+                          styles.mediaStatsDot,
+                          { backgroundColor: item.color },
+                        ]}
+                      />
+                      <Text style={styles.mediaStatsLegendLabel}>{item.label}</Text>
+                      <Text style={styles.mediaStatsLegendValue}>{formatNumber(item.count)}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            ) : (
+              <View style={styles.emptyStateCard}>
+                <Text style={styles.emptyStateText}>
+                  {isSignedIn
+                    ? "Add manga to your library to start seeing statistics."
+                    : "Sign in and add manga to track your stats."}
+                </Text>
+              </View>
+            )}
+          </View>
+
+          <View style={styles.sectionBlock}>
+            <Text style={[styles.sectionTitle, styles.sectionTitleAccent, styles.sectionTitleUpper]}>
+              Favorite Mangas
+            </Text>
+            {favoriteMangaEntries.length ? (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.favoritesList}
+              >
+                {favoriteMangaEntries.map((entry, index) =>
+                  renderFavoriteCard(entry, index, "manga"),
+                )}
+              </ScrollView>
+            ) : (
+              <View style={styles.emptyStateCard}>
+                <Text style={styles.emptyStateText}>
+                  {isSignedIn
+                    ? "Rate your manga or keep reading to build your favorites."
+                    : "Sign in to curate a list of favorite manga."}
+                </Text>
+              </View>
+            )}
+          </View>
+
+          <View style={styles.sectionBlock}>
+            <Text style={[styles.sectionTitle, styles.sectionTitleAccent, styles.sectionTitleUpper]}>
+              Manga List
+            </Text>
+            {segregatedEntries.manga.length ? (
+              segregatedEntries.manga.map((entry, index) =>
+                renderLibraryCard(entry, "manga", index),
+              )
+            ) : (
+              <View style={styles.emptyStateCard}>
+                <Text style={styles.emptyStateText}>
+                  {isSignedIn
+                    ? "Your manga list is empty. Add manga from the Explore tab to start tracking."
+                    : "Sign in to build and view your manga list."}
+                </Text>
+              </View>
+            )}
+          </View>
+        </>
       )}
 
       <TouchableOpacity
