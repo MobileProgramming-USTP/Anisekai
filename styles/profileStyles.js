@@ -97,6 +97,7 @@ const profileStyles = StyleSheet.create({
   statRow: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
     borderRadius: 18,
     paddingVertical: theme.spacing.medium,
     paddingHorizontal: theme.spacing.large,
@@ -105,10 +106,10 @@ const profileStyles = StyleSheet.create({
     borderColor: "rgba(255, 255, 255, 0.05)",
   },
   statRowPrimary: {
-    backgroundColor: PANEL_BACKGROUND,
+    backgroundColor: "#1E2A3A",
   },
   statRowSecondary: {
-    backgroundColor: "#25364a",
+    backgroundColor: "#1E2A3A",
   },
   statRowLast: {
     marginBottom: 0,
@@ -122,7 +123,7 @@ const profileStyles = StyleSheet.create({
   statSegmentDivider: {
     borderLeftWidth: 1,
     borderLeftColor: "rgba(255, 255, 255, 0.1)",
-    paddingHorizontal: theme.spacing.medium,
+    paddingLeft: theme.spacing.medium,
   },
   statValue: {
     fontSize: theme.typography.sizes.large,
