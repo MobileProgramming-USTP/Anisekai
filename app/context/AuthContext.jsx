@@ -4,6 +4,7 @@ const AuthContext = createContext({
   user: null,
   signIn: () => undefined,
   signOut: () => undefined,
+  updateProfile: () => undefined,
 });
 
 export const AuthProvider = ({ children }) => {
@@ -17,13 +18,23 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   }, []);
 
+  const updateProfile = useCallback((updates = {}) => {
+    setUser((previous) => {
+      if (!previous) {
+        return previous;
+      }
+      return { ...previous, ...updates };
+    });
+  }, []);
+
   const value = useMemo(
     () => ({
       user,
       signIn,
       signOut,
+      updateProfile,
     }),
-    [user, signIn, signOut]
+    [user, signIn, signOut, updateProfile]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -1,0 +1,193 @@
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "expo-router";
+import {
+  Image,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+
+import styles from "../../../styles/profileEditStyles";
+import { useAuth } from "../../context/AuthContext";
+
+const AVATAR_PLACEHOLDER = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
+
+const sanitizeText = (value) => value?.trim() ?? "";
+
+const ProfileEdit = () => {
+  const router = useRouter();
+  const { user, updateProfile } = useAuth();
+
+  const isSignedIn = Boolean(user);
+
+  const [form, setForm] = useState({
+    username: user?.username ?? "",
+    email: user?.email ?? "",
+    avatar: user?.avatar ?? "",
+  });
+
+  useEffect(() => {
+    setForm({
+      username: user?.username ?? "",
+      email: user?.email ?? "",
+      avatar: user?.avatar ?? "",
+    });
+  }, [user?.username, user?.email, user?.avatar]);
+
+  const placeholderInitial = useMemo(() => {
+    const basis = sanitizeText(form.username) || sanitizeText(user?.username) || "U";
+    return basis.charAt(0).toUpperCase();
+  }, [form.username, user?.username]);
+
+  const previewAvatar = useMemo(() => {
+    const candidate = sanitizeText(form.avatar);
+    if (candidate) {
+      return candidate;
+    }
+    if (sanitizeText(user?.avatar)) {
+      return sanitizeText(user?.avatar);
+    }
+    return AVATAR_PLACEHOLDER;
+  }, [form.avatar, user?.avatar]);
+
+  const isDirty = useMemo(() => {
+    return (
+      sanitizeText(form.username) !== sanitizeText(user?.username) ||
+      sanitizeText(form.email) !== sanitizeText(user?.email) ||
+      sanitizeText(form.avatar) !== sanitizeText(user?.avatar)
+    );
+  }, [form.username, form.email, form.avatar, user?.username, user?.email, user?.avatar]);
+
+  const handleChange = (field) => (value) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleCancel = () => {
+    router.back();
+  };
+
+  const handleSave = () => {
+    if (!isSignedIn) {
+      router.replace("/login/login");
+      return;
+    }
+
+    const username = sanitizeText(form.username);
+    const email = sanitizeText(form.email);
+    const avatar = sanitizeText(form.avatar);
+
+    updateProfile({
+      username: username || user?.username || "User",
+      email: email || user?.email || "",
+      avatar: avatar || null,
+    });
+
+    router.back();
+  };
+
+  const handleGoToLogin = () => {
+    router.replace("/login/login");
+  };
+
+  if (!isSignedIn) {
+    return (
+      <View style={styles.emptyContainer}>
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyTitle}>Sign in required</Text>
+          <Text style={styles.emptyBody}>
+            You need to sign in before you can update your profile details and avatar.
+          </Text>
+          <TouchableOpacity style={styles.emptyButton} onPress={handleGoToLogin}>
+            <Text style={styles.emptyButtonText}>Go to Login</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <Text style={styles.header}>Edit Profile</Text>
+
+        <View style={styles.avatarPreview}>
+          {previewAvatar ? (
+            <Image source={{ uri: previewAvatar }} style={styles.avatarImage} resizeMode="cover" />
+          ) : (
+            <View style={styles.avatarFallback}>
+              <Text style={styles.avatarFallbackText}>{placeholderInitial}</Text>
+            </View>
+          )}
+        </View>
+
+        <View style={styles.sectionCard}>
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>Display Name</Text>
+            <TextInput
+              value={form.username}
+              onChangeText={handleChange("username")}
+              placeholder="Your display name"
+              placeholderTextColor="rgba(255, 255, 255, 0.5)"
+              style={styles.input}
+              autoCapitalize="words"
+              returnKeyType="next"
+            />
+          </View>
+
+          <View style={styles.fieldGroup}>
+            <Text style={styles.fieldLabel}>Email</Text>
+            <TextInput
+              value={form.email}
+              onChangeText={handleChange("email")}
+              placeholder="you@example.com"
+              placeholderTextColor="rgba(255, 255, 255, 0.5)"
+              style={styles.input}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              returnKeyType="next"
+            />
+          </View>
+
+          <View style={[styles.fieldGroup, { marginBottom: 0 }]}>
+            <Text style={styles.fieldLabel}>Avatar URL</Text>
+            <TextInput
+              value={form.avatar}
+              onChangeText={handleChange("avatar")}
+              placeholder="https://example.com/avatar.png"
+              placeholderTextColor="rgba(255, 255, 255, 0.5)"
+              style={styles.input}
+              autoCapitalize="none"
+              autoCorrect={false}
+              returnKeyType="done"
+            />
+            <Text style={styles.helperText}>
+              Paste a direct image link to use it as your avatar. Leave blank to use the default
+              avatar.
+            </Text>
+          </View>
+
+          <View style={styles.actionsRow}>
+            <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={handleCancel}>
+              <Text style={styles.buttonText}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.button,
+                styles.saveButton,
+                !isDirty && styles.disabledButton,
+              ]}
+              onPress={handleSave}
+              disabled={!isDirty}
+            >
+              <Text style={styles.buttonText}>Save Changes</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ScrollView>
+    </View>
+  );
+};
+
+export default ProfileEdit;
