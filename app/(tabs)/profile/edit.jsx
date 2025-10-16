@@ -142,7 +142,7 @@ const ProfileEdit = () => {
 
         <View style={styles.sectionCard}>
           <View style={styles.fieldGroup}>
-            <Text style={styles.fieldLabel}>Display Name</Text>
+            <Text style={styles.fieldLabel}>Username</Text>
             <TextInput
               value={form.username}
               onChangeText={handleChange("username")}
