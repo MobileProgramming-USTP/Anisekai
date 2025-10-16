@@ -2,8 +2,10 @@ import { useCallback, useMemo, useState } from "react";
 import { useRouter } from "expo-router";
 import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import styles from "../../../styles/profileStyles";
+import { theme } from "../../../styles/theme";
 import { useAuth } from "../../context/AuthContext";
 import { useLibrary } from "../../context/LibraryContext";
 
@@ -110,8 +112,19 @@ const formatNumber = (value, fractionDigits = 0) => {
 
 const Profile = () => {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
   const bottomInset = useMemo(() => tabBarHeight + 32, [tabBarHeight]);
+  const safeTop = Math.max(insets.top, 0);
+  const coverTopStyle = useMemo(() => {
+    if (!safeTop) {
+      return null;
+    }
+    return {
+      paddingTop: theme.spacing.medium + safeTop,
+      marginTop: -safeTop,
+    };
+  }, [safeTop]);
   const { user, signOut } = useAuth();
   const {
     entries = [],
@@ -453,7 +466,7 @@ const Profile = () => {
       contentContainerStyle={[styles.content, { paddingBottom: bottomInset }]}
       scrollIndicatorInsets={{ bottom: bottomInset }}
     >
-      <View style={styles.coverBackground}>
+      <View style={[styles.coverBackground, coverTopStyle]}>
         <View style={styles.coverContainer}>
           <View style={styles.coverProfileRow}>
             <TouchableOpacity
