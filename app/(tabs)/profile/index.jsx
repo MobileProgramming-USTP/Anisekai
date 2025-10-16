@@ -12,8 +12,6 @@ const PROFILE_TABS = [
   { key: "manga", label: "Manga List" },
 ];
 
-const AVATAR_PLACEHOLDER = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
-
 const MAX_FAVORITES = 6;
 const EMPTY_SET = new Set();
 
@@ -119,6 +117,21 @@ const Profile = () => {
     statusOrder = [],
     favoriteEntryIds,
   } = useLibrary();
+
+  const sanitizedAvatar = useMemo(() => {
+    const candidate = typeof user?.avatar === "string" ? user.avatar.trim() : "";
+    return candidate.length ? candidate : null;
+  }, [user?.avatar]);
+
+  const displayName = useMemo(() => {
+    const candidate = typeof user?.username === "string" ? user.username.trim() : "";
+    return candidate.length ? candidate : "Guest";
+  }, [user?.username]);
+
+  const avatarInitial = useMemo(
+    () => displayName.charAt(0).toUpperCase(),
+    [displayName],
+  );
 
   const favoriteIdsSet = favoriteEntryIds instanceof Set ? favoriteEntryIds : EMPTY_SET;
 
@@ -447,15 +460,17 @@ const Profile = () => {
               isSignedIn ? "Edit profile" : "Sign in to edit your profile"
             }
           >
-            <Image
-              source={{ uri: user?.avatar ?? AVATAR_PLACEHOLDER }}
-              style={styles.avatar}
-              resizeMode="cover"
-            />
+            {sanitizedAvatar ? (
+              <Image source={{ uri: sanitizedAvatar }} style={styles.avatar} resizeMode="cover" />
+            ) : (
+              <View style={styles.avatarFallback}>
+                <Text style={styles.avatarFallbackText}>{avatarInitial}</Text>
+              </View>
+            )}
           </TouchableOpacity>
 
           <View style={styles.profileDetails}>
-            <Text style={styles.username}>{user?.username ?? "Guest"}</Text>
+            <Text style={styles.username}>{displayName}</Text>
             <Text style={styles.email}>
               {user?.email ?? "Sign in to see your profile details"}
             </Text>

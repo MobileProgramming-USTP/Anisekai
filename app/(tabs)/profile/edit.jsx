@@ -13,8 +13,6 @@ import { Ionicons } from "@expo/vector-icons";
 import styles from "../../../styles/profileEditStyles";
 import { useAuth } from "../../context/AuthContext";
 
-const AVATAR_PLACEHOLDER = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
-
 const sanitizeText = (value) => value?.trim() ?? "";
 
 const ProfileEdit = () => {
@@ -43,10 +41,8 @@ const ProfileEdit = () => {
     if (candidate) {
       return candidate;
     }
-    if (sanitizeText(user?.avatar)) {
-      return sanitizeText(user?.avatar);
-    }
-    return AVATAR_PLACEHOLDER;
+    const existing = sanitizeText(user?.avatar);
+    return existing || null;
   }, [form.avatar, user?.avatar]);
 
   const isDirty = useMemo(() => {

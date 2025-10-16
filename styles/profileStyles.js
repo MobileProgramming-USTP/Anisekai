@@ -43,6 +43,18 @@ const profileStyles = StyleSheet.create({
     width: "100%",
     height: "100%",
   },
+  avatarFallback: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#1e2a3a",
+  },
+  avatarFallbackText: {
+    fontSize: theme.typography.sizes.xxlarge,
+    fontWeight: theme.typography.weights.bold,
+    color: ACCENT,
+    textTransform: "uppercase",
+  },
   profileDetails: {
     flex: 1,
     justifyContent: "center",
