@@ -12,7 +12,8 @@ const profileEditStyles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: theme.spacing.large,
-    paddingVertical: theme.spacing.xlarge,
+    paddingTop: theme.spacing.xlarge + theme.spacing.medium,
+    paddingBottom: theme.spacing.xlarge,
   },
   emptyContainer: {
     flex: 1,
@@ -20,12 +21,29 @@ const profileEditStyles = StyleSheet.create({
     paddingHorizontal: theme.spacing.large,
     justifyContent: "center",
   },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: theme.spacing.large,
+  },
+  backButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.08)",
+    marginRight: theme.spacing.small,
+  },
   header: {
+    flex: 1,
     fontSize: theme.typography.sizes.xlarge,
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.text,
-    marginBottom: theme.spacing.large,
     textAlign: "center",
+  },
+  headerSpacer: {
+    width: 44,
   },
   avatarPreview: {
     width: 140,

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "expo-router";
 import {
   Image,
@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 import styles from "../../../styles/profileEditStyles";
 import { useAuth } from "../../context/AuthContext";
@@ -29,12 +30,8 @@ const ProfileEdit = () => {
   });
 
   useEffect(() => {
-    setForm({
-      username: user?.username ?? "",
-      email: user?.email ?? "",
-      avatar: user?.avatar ?? "",
-    });
-  }, [user?.username, user?.email, user?.avatar]);
+    resetForm();
+  }, [resetForm]);
 
   const placeholderInitial = useMemo(() => {
     const basis = sanitizeText(form.username) || sanitizeText(user?.username) || "U";
@@ -60,11 +57,25 @@ const ProfileEdit = () => {
     );
   }, [form.username, form.email, form.avatar, user?.username, user?.email, user?.avatar]);
 
+  const resetForm = useCallback(() => {
+    setForm({
+      username: user?.username ?? "",
+      email: user?.email ?? "",
+      avatar: user?.avatar ?? "",
+    });
+  }, [user?.username, user?.email, user?.avatar]);
+
   const handleChange = (field) => (value) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleCancel = () => {
+    resetForm();
+    router.back();
+  };
+
+  const handleBack = () => {
+    resetForm();
     router.back();
   };
 
@@ -110,7 +121,18 @@ const ProfileEdit = () => {
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Text style={styles.header}>Edit Profile</Text>
+        <View style={styles.headerRow}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={handleBack}
+            accessibilityRole="button"
+            accessibilityLabel="Go back to profile"
+          >
+            <Ionicons name="arrow-back" size={22} color="#A5B2C2" />
+          </TouchableOpacity>
+          <Text style={styles.header}>Edit Profile</Text>
+          <View style={styles.headerSpacer} />
+        </View>
 
         <View style={styles.avatarPreview}>
           {previewAvatar ? (

@@ -115,15 +115,15 @@ const profileStyles = StyleSheet.create({
     marginBottom: 0,
   },
   statSegment: {
-    flex: 1,
+    width: 112,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: theme.spacing.medium,
+    paddingHorizontal: theme.spacing.small,
   },
   statSegmentDivider: {
     borderLeftWidth: 1,
     borderLeftColor: "rgba(255, 255, 255, 0.1)",
-    paddingLeft: theme.spacing.medium,
+    paddingLeft: theme.spacing.small,
   },
   statValue: {
     fontSize: theme.typography.sizes.large,
