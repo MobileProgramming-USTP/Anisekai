@@ -170,7 +170,7 @@ const fromBackendEntry = (entry) => {
 };
 
 export const LibraryProvider = ({ children }) => {
-  const { user } = useAuth();
+  const { user, syncFavorites } = useAuth();
   const userId = user?.id ?? null;
 
   const [entriesById, setEntriesById] = useState({});
@@ -186,6 +186,7 @@ export const LibraryProvider = ({ children }) => {
   const updateStatusMutation = useMutation(api['functions/library'].updateStatus);
   const updateProgressMutation = useMutation(api['functions/library'].updateProgress);
   const updateRatingMutation = useMutation(api['functions/library'].updateRating);
+  const updateFavoritesMutation = useMutation(api['functions/library'].updateFavorites);
 
   useEffect(() => {
     if (!userId) {
@@ -213,6 +214,66 @@ export const LibraryProvider = ({ children }) => {
 
     setEntriesById(mapped);
   }, [remoteEntries, userId]);
+
+  useEffect(() => {
+    if (!userId) {
+      setFavoriteEntryIds(new Set());
+      return;
+    }
+
+    const favorites = Array.isArray(user?.favorites) ? user.favorites : [];
+
+    setFavoriteEntryIds((prev) => {
+      const next = new Set();
+
+      favorites.forEach((value) => {
+        const normalized = normalizeMalId(value);
+        if (normalized != null) {
+          next.add(normalized);
+        }
+      });
+
+      if (next.size === prev.size) {
+        let differs = false;
+        for (const value of next) {
+          if (!prev.has(value)) {
+            differs = true;
+            break;
+          }
+        }
+        if (!differs) {
+          return prev;
+        }
+      }
+
+      return next;
+    });
+  }, [user?.favorites, userId]);
+
+  const persistFavorites = useCallback(
+    (favoritesSet) => {
+      if (!userId) {
+        return;
+      }
+
+      const sanitizedFavorites = Array.from(favoritesSet)
+        .map((value) => normalizeMalId(value))
+        .filter((value) => value != null);
+
+      syncFavorites(sanitizedFavorites);
+
+      updateFavoritesMutation({ userId, favorites: sanitizedFavorites })
+        .then((savedFavorites) => {
+          if (Array.isArray(savedFavorites)) {
+            syncFavorites(savedFavorites);
+          }
+        })
+        .catch((error) => {
+          console.error('Failed to update favorites', error);
+        });
+    },
+    [syncFavorites, updateFavoritesMutation, userId]
+  );
 
   const upsertEntry = useCallback(
     (media, { status, scope } = {}) => {
@@ -270,6 +331,7 @@ export const LibraryProvider = ({ children }) => {
       }
 
       let hadEntry = false;
+      let nextFavoritesSet = null;
       setEntriesById((prev) => {
         if (!prev[normalizedMalId]) {
           return prev;
@@ -287,6 +349,7 @@ export const LibraryProvider = ({ children }) => {
           }
           const next = new Set(prev);
           next.delete(normalizedMalId);
+          nextFavoritesSet = next;
           return next;
         });
 
@@ -294,10 +357,13 @@ export const LibraryProvider = ({ children }) => {
           removeEntryMutation({ userId, malId: normalizedMalId }).catch((error) => {
             console.error('Failed to remove library entry', error);
           });
+          if (nextFavoritesSet) {
+            persistFavorites(nextFavoritesSet);
+          }
         }
       }
     },
-    [removeEntryMutation, userId]
+    [persistFavorites, removeEntryMutation, userId]
   );
 
   const updateEntryStatus = useCallback(
@@ -446,24 +512,34 @@ export const LibraryProvider = ({ children }) => {
   const resetLibrary = useCallback(() => {
     setEntriesById({});
     setFavoriteEntryIds(() => new Set());
-  }, []);
+    syncFavorites([]);
+  }, [syncFavorites]);
 
-  const toggleFavoriteEntry = useCallback((malId) => {
-    const normalizedMalId = normalizeMalId(malId);
-    if (normalizedMalId == null) {
-      return;
-    }
-
-    setFavoriteEntryIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(normalizedMalId)) {
-        next.delete(normalizedMalId);
-      } else {
-        next.add(normalizedMalId);
+  const toggleFavoriteEntry = useCallback(
+    (malId) => {
+      const normalizedMalId = normalizeMalId(malId);
+      if (normalizedMalId == null) {
+        return;
       }
-      return next;
-    });
-  }, []);
+
+      let nextFavoritesSet = null;
+      setFavoriteEntryIds((prev) => {
+        const next = new Set(prev);
+        if (next.has(normalizedMalId)) {
+          next.delete(normalizedMalId);
+        } else {
+          next.add(normalizedMalId);
+        }
+        nextFavoritesSet = next;
+        return next;
+      });
+
+      if (userId && nextFavoritesSet) {
+        persistFavorites(nextFavoritesSet);
+      }
+    },
+    [persistFavorites, userId]
+  );
 
   const isFavoriteEntry = useCallback(
     (malId) => favoriteEntryIds.has(normalizeMalId(malId)),

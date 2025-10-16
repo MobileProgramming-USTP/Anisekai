@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "expo-router";
 import {
+  ActivityIndicator,
+  Alert,
   Image,
   ScrollView,
   Text,
@@ -26,6 +28,15 @@ const ProfileEdit = () => {
     email: user?.email ?? "",
     avatar: user?.avatar ?? "",
   });
+  const [saving, setSaving] = useState(false);
+
+  const resetForm = useCallback(() => {
+    setForm({
+      username: user?.username ?? "",
+      email: user?.email ?? "",
+      avatar: user?.avatar ?? "",
+    });
+  }, [user?.username, user?.email, user?.avatar]);
 
   useEffect(() => {
     resetForm();
@@ -53,14 +64,6 @@ const ProfileEdit = () => {
     );
   }, [form.username, form.email, form.avatar, user?.username, user?.email, user?.avatar]);
 
-  const resetForm = useCallback(() => {
-    setForm({
-      username: user?.username ?? "",
-      email: user?.email ?? "",
-      avatar: user?.avatar ?? "",
-    });
-  }, [user?.username, user?.email, user?.avatar]);
-
   const handleChange = (field) => (value) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
@@ -75,7 +78,7 @@ const ProfileEdit = () => {
     router.back();
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!isSignedIn) {
       router.replace("/login/login");
       return;
@@ -85,13 +88,21 @@ const ProfileEdit = () => {
     const email = sanitizeText(form.email);
     const avatar = sanitizeText(form.avatar);
 
-    updateProfile({
-      username: username || user?.username || "User",
-      email: email || user?.email || "",
-      avatar: avatar || null,
-    });
-
-    router.back();
+    setSaving(true);
+    try {
+      await updateProfile({
+        username: username || user?.username || "User",
+        email: email || user?.email || "",
+        avatar: avatar || null,
+      });
+      router.back();
+    } catch (error) {
+      const message =
+        error?.data?.details ?? error?.message ?? "Something went wrong while saving your profile.";
+      Alert.alert("Update Failed", message);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleGoToLogin = () => {
@@ -194,12 +205,16 @@ const ProfileEdit = () => {
               style={[
                 styles.button,
                 styles.saveButton,
-                !isDirty && styles.disabledButton,
+                (!isDirty || saving) && styles.disabledButton,
               ]}
               onPress={handleSave}
-              disabled={!isDirty}
+              disabled={!isDirty || saving}
             >
-              <Text style={styles.buttonText}>Save Changes</Text>
+              {saving ? (
+                <ActivityIndicator color="#0b141f" />
+              ) : (
+                <Text style={styles.buttonText}>Save Changes</Text>
+              )}
             </TouchableOpacity>
           </View>
         </View>

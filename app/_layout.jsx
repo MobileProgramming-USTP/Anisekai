@@ -67,10 +67,10 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <AuthProvider>
-      <ConvexProvider client={convex}>
+    <ConvexProvider client={convex}>
+      <AuthProvider>
         <Stack screenOptions={{ headerShown: false }} />
-      </ConvexProvider>
-    </AuthProvider>
+      </AuthProvider>
+    </ConvexProvider>
   );
 }

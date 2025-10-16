@@ -6,7 +6,10 @@ export default defineSchema({
     username: v.string(),
     email: v.string(),
     password: v.string(),
+    avatar: v.optional(v.union(v.null(), v.string())),
+    favorites: v.optional(v.array(v.number())),
     createdAt: v.number(),
+    updatedAt: v.optional(v.number()),
   })
     .index("byEmail", ["email"])
     .index("byUsername", ["username"]),

@@ -1,4 +1,5 @@
 import { mutation, query } from "../_generated/server";
+import { v } from "convex/values";
 
 const DEFAULT_PROGRESS = {
   watchedEpisodes: 0,
@@ -30,6 +31,25 @@ const sanitizeNullableNumber = (value) =>
 
 const sanitizeNullableString = (value) =>
   typeof value === "string" && value.length > 0 ? value : null;
+
+const normalizeFavoriteMalIds = (favorites) => {
+  if (!Array.isArray(favorites)) {
+    return [];
+  }
+  const seen = new Set();
+  const sanitized = [];
+  for (const entry of favorites) {
+    const numeric =
+      typeof entry === "number" && Number.isFinite(entry)
+        ? entry
+        : Number(entry);
+    if (Number.isFinite(numeric) && !seen.has(numeric)) {
+      seen.add(numeric);
+      sanitized.push(numeric);
+    }
+  }
+  return sanitized;
+};
 
 const resolveExistingEntry = (db, userId, malId) =>
   db
@@ -183,4 +203,26 @@ export const remove = mutation(async ({ db }, { userId, malId }) => {
 
   await db.delete(existing._id);
   return existing._id;
+});
+
+export const updateFavorites = mutation({
+  args: {
+    userId: v.id("users"),
+    favorites: v.array(v.number()),
+  },
+  handler: async ({ db }, { userId, favorites }) => {
+    const user = await db.get(userId);
+    if (!user) {
+      throw new Error("User not found.");
+    }
+
+    const sanitizedFavorites = normalizeFavoriteMalIds(favorites);
+
+    await db.patch(userId, {
+      favorites: sanitizedFavorites,
+      updatedAt: Date.now(),
+    });
+
+    return sanitizedFavorites;
+  },
 });
