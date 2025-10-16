@@ -101,6 +101,7 @@ const LibraryScreen = () => {
   const [progressInputValue, setProgressInputValue] = useState('');
   const [ratingModalVisible, setRatingModalVisible] = useState(false);
   const [ratingInputValue, setRatingInputValue] = useState('');
+  const [favoriteEntryIds, setFavoriteEntryIds] = useState(() => new Set());
 
   const activeScopeLabel = useMemo(
     () => SCOPE_OPTIONS.find((option) => option.value === activeScope)?.label ?? 'Anime',
@@ -136,6 +137,16 @@ const LibraryScreen = () => {
   }, [entries, selectedEntryId]);
 
   const selectedEntryScope = selectedEntry?.scope || null;
+  const selectedEntryMalId =
+    typeof selectedEntry?.mal_id === 'number' ? selectedEntry.mal_id : null;
+
+  const isSelectedFavorite = useMemo(
+    () =>
+      selectedEntryMalId != null
+        ? favoriteEntryIds.has(selectedEntryMalId)
+        : false,
+    [favoriteEntryIds, selectedEntryMalId]
+  );
 
   const sectionsByStatus = useMemo(() => {
     const grouped = statusOrder.reduce((acc, key) => {
@@ -333,6 +344,7 @@ const LibraryScreen = () => {
     ratingChipValue != null ? `${ratingChipValue} / 10.0` : '? / 10.0';
 
   const statusChipAccent = selectedStatusMeta.color || '#4C82FF';
+  const favoriteChipText = isSelectedFavorite ? 'Favorited' : 'Add to favorites';
 
   const rawDetail = selectedEntry?.raw || {};
   const studioNames = Array.isArray(rawDetail?.studios)
@@ -434,6 +446,20 @@ const LibraryScreen = () => {
       closeStatusPicker();
       return;
     }
+
+    setFavoriteEntryIds((prev) => {
+      if (
+        selectedEntry.mal_id == null ||
+        typeof selectedEntry.mal_id !== 'number' ||
+        !prev.has(selectedEntry.mal_id)
+      ) {
+        return prev;
+      }
+
+      const next = new Set(prev);
+      next.delete(selectedEntry.mal_id);
+      return next;
+    });
 
     removeEntry(selectedEntry.mal_id);
     closeStatusPicker();
@@ -558,6 +584,22 @@ const LibraryScreen = () => {
     setRatingInputValue('');
     closeRatingModal();
   }, [selectedEntry, updateEntryRating, closeRatingModal]);
+
+  const handleToggleFavorite = useCallback(() => {
+    if (selectedEntryMalId == null) {
+      return;
+    }
+
+    setFavoriteEntryIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(selectedEntryMalId)) {
+        next.delete(selectedEntryMalId);
+      } else {
+        next.add(selectedEntryMalId);
+      }
+      return next;
+    });
+  }, [selectedEntryMalId]);
 
   const renderSection = (statusKey) => {
     const entriesForStatus = sectionsByStatus[statusKey] ?? [];
@@ -911,6 +953,7 @@ const LibraryScreen = () => {
                   style={[
                     styles.detailActionChip,
                     styles.detailActionChipStatus,
+                    styles.detailActionChipHalf,
                   ]}
                   onPress={handleOpenStatusPicker}
                   hitSlop={6}
@@ -939,6 +982,8 @@ const LibraryScreen = () => {
                   style={[
                     styles.detailActionChip,
                     styles.detailActionChipDark,
+                    styles.detailActionChipHalf,
+                    styles.detailActionChipRight,
                   ]}
                   onPress={handleOpenProgressModal}
                   hitSlop={6}
@@ -963,7 +1008,7 @@ const LibraryScreen = () => {
                   style={[
                     styles.detailActionChip,
                     styles.detailActionChipDark,
-                    styles.detailActionChipLast,
+                    styles.detailActionChipHalf,
                   ]}
                   onPress={handleOpenRatingModal}
                   hitSlop={6}
@@ -976,6 +1021,36 @@ const LibraryScreen = () => {
                       ellipsizeMode="tail"
                     >
                       {ratingChipText}
+                    </Text>
+                  </View>
+                </Pressable>
+
+                <Pressable
+                  style={[
+                    styles.detailActionChip,
+                    styles.detailActionChipDark,
+                    styles.detailActionChipHalf,
+                    styles.detailActionChipRight,
+                    isSelectedFavorite && styles.detailActionChipFavoriteActive,
+                  ]}
+                  onPress={handleToggleFavorite}
+                  hitSlop={6}
+                >
+                  <View style={styles.detailActionInline}>
+                    <Ionicons
+                      name={isSelectedFavorite ? 'heart' : 'heart-outline'}
+                      size={16}
+                      color="#FF6B6B"
+                    />
+                    <Text
+                      style={[
+                        styles.detailActionLabel,
+                        isSelectedFavorite && styles.detailActionLabelFavorite,
+                      ]}
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                    >
+                      {favoriteChipText}
                     </Text>
                   </View>
                 </Pressable>
@@ -1459,7 +1534,8 @@ const styles = StyleSheet.create({
   },
   detailActionsRow: {
     flexDirection: 'row',
-    flexWrap: 'nowrap',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
     marginBottom: 28,
   },
   detailActionChip: {
@@ -1473,8 +1549,13 @@ const styles = StyleSheet.create({
     borderColor: '#1E2A3A',
     marginRight: 12,
     marginTop: 12,
-    flex: 1,
     minWidth: 0,
+  },
+  detailActionChipHalf: {
+    width: '48%',
+  },
+  detailActionChipRight: {
+    marginRight: 0,
   },
   detailActionChipDark: {
     backgroundColor: '#1E2A3A',
@@ -1484,14 +1565,16 @@ const styles = StyleSheet.create({
     borderWidth: 0,
     backgroundColor: '#1E2A3A',
   },
-  detailActionChipLast: {
-    marginRight: 0,
+  detailActionChipFavoriteActive: {
+    borderColor: '#FF6B6B',
+    backgroundColor: 'rgba(255, 107, 107, 0.12)',
   },
   detailActionInline: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
     minWidth: 0,
+    justifyContent: 'center',
   },
   detailActionDot: {
     width: 10,
@@ -1504,6 +1587,9 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     flexShrink: 1,
     minWidth: 0,
+  },
+  detailActionLabelFavorite: {
+    color: '#FF6B6B',
   },
   detailSection: {
     marginBottom: 28,
