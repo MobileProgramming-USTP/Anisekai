@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useLibrary } from '../../context/LibraryContext';
 import styles from '../../../styles/exploreStyles';
 import ExploreDetailView from '../../../src/explore/components/ExploreDetailView';
@@ -27,6 +28,8 @@ import { delay, fetchJsonWithRetry, resolveSectionEndpoint } from '../../../src/
 import { getItemKey } from '../../../src/explore/utils/items';
 
 const ExploreScreen = () => {
+  const tabBarHeight = useBottomTabBarHeight();
+  const bottomInset = useMemo(() => tabBarHeight + 32, [tabBarHeight]);
   const [sectionsData, setSectionsData] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -656,7 +659,8 @@ const ExploreScreen = () => {
   return (
     <ScrollView
       style={styles.container}
-      contentContainerStyle={styles.scrollContent}
+      contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomInset }]}
+      scrollIndicatorInsets={{ bottom: bottomInset }}
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
       onScrollBeginDrag={closeScopeMenu}

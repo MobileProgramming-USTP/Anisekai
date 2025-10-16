@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { useRouter } from "expo-router";
 import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 
 import styles from "../../../styles/profileStyles";
 import { useAuth } from "../../context/AuthContext";
@@ -109,6 +110,8 @@ const formatNumber = (value, fractionDigits = 0) => {
 
 const Profile = () => {
   const router = useRouter();
+  const tabBarHeight = useBottomTabBarHeight();
+  const bottomInset = useMemo(() => tabBarHeight + 32, [tabBarHeight]);
   const { user, signOut } = useAuth();
   const {
     entries = [],
@@ -445,7 +448,11 @@ const Profile = () => {
   }));
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={[styles.content, { paddingBottom: bottomInset }]}
+      scrollIndicatorInsets={{ bottom: bottomInset }}
+    >
       <View style={styles.coverBackground}>
         <View style={styles.coverContainer}>
           <View style={styles.coverProfileRow}>

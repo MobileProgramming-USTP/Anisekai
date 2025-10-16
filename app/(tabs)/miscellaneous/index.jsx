@@ -1,6 +1,7 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { Dimensions, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { Dimensions, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 
 const tools = [
   {
@@ -56,6 +57,9 @@ const ToolCard = ({ item }) => (
 );
 
 const MiscellaneousScreen = () => {
+  const tabBarHeight = useBottomTabBarHeight();
+  const bottomInset = tabBarHeight + 32;
+
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Tools & Fun</Text>
@@ -65,7 +69,7 @@ const MiscellaneousScreen = () => {
         keyExtractor={(item) => item.key}
         numColumns={2}
         columnWrapperStyle={styles.row}
-        contentContainerStyle={styles.gridContentContainer}
+        contentContainerStyle={[styles.gridContentContainer, { paddingBottom: bottomInset }]}
       />
     </View>
   );

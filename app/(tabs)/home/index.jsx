@@ -1,9 +1,17 @@
-﻿import { ImageBackground, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { ImageBackground, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import styles from "../../../styles/homeStyles";
 
 const Home = () => {
+  const tabBarHeight = useBottomTabBarHeight();
+  const bottomInset = tabBarHeight + 32;
+
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={{ paddingBottom: bottomInset }}
+      showsVerticalScrollIndicator={false}
+    >
       {/* Hero Banner */}
       <ImageBackground
         source={require("../../../assets/images/anime-collage.png")}
@@ -12,7 +20,7 @@ const Home = () => {
       >
         <View style={styles.overlay}>
           <Text style={styles.heroText}>Welcome to Anisekai</Text>
-          <Text style={styles.heroSub}>Dive into your anime world ✨</Text>
+          <Text style={styles.heroSub}>Dive into your anime world ?</Text>
         </View>
       </ImageBackground>
 
@@ -42,4 +50,3 @@ const Home = () => {
 };
 
 export default Home;
-

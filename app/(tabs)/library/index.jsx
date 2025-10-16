@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Image as ExpoImage } from 'expo-image';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useLibrary } from '../../context/LibraryContext';
 
 const SCOPE_OPTIONS = [
@@ -658,60 +659,64 @@ const LibraryScreen = () => {
     );
   };
 
+  const tabBarHeight = useBottomTabBarHeight();
+  const bottomInset = useMemo(() => tabBarHeight + 32, [tabBarHeight]);
+
   return (
     <>
       <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.scrollContent}
-      showsVerticalScrollIndicator={false}
-      keyboardShouldPersistTaps="handled"
-      onScrollBeginDrag={closeScopeMenu}
-      onMomentumScrollBegin={closeScopeMenu}
-    >
-      <View style={styles.headerRow}>
-        <Text style={styles.headerTitle}>Library</Text>
-        <View style={styles.scopeDropdownContainer}>
-          <Pressable
-            style={[
-              styles.scopeButton,
-              scopeMenuOpen && styles.scopeButtonActive,
-            ]}
-            onPress={() => setScopeMenuOpen((prev) => !prev)}
-            hitSlop={8}
-          >
-            <Text style={styles.scopeButtonLabel}>{activeScopeLabel}</Text>
-            <Ionicons
-              name={scopeMenuOpen ? 'chevron-up' : 'chevron-down'}
-              size={20}
-              color="#A5B2C2"
-            />
-          </Pressable>
-          {scopeMenuOpen && (
-            <View style={styles.scopeMenu}>
-              {SCOPE_OPTIONS.map((option) => (
-                <Pressable
-                  key={option.value}
-                  style={[
-                    styles.scopeMenuItem,
-                    option.value === activeScope && styles.scopeMenuItemActive,
-                  ]}
-                  onPress={() => handleScopeChange(option.value)}
-                  hitSlop={6}
-                >
-                  <Text
+        style={styles.container}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomInset }]}
+        scrollIndicatorInsets={{ bottom: bottomInset }}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        onScrollBeginDrag={closeScopeMenu}
+        onMomentumScrollBegin={closeScopeMenu}
+      >
+        <View style={styles.headerRow}>
+          <Text style={styles.headerTitle}>Library</Text>
+          <View style={styles.scopeDropdownContainer}>
+            <Pressable
+              style={[
+                styles.scopeButton,
+                scopeMenuOpen && styles.scopeButtonActive,
+              ]}
+              onPress={() => setScopeMenuOpen((prev) => !prev)}
+              hitSlop={8}
+            >
+              <Text style={styles.scopeButtonLabel}>{activeScopeLabel}</Text>
+              <Ionicons
+                name={scopeMenuOpen ? 'chevron-up' : 'chevron-down'}
+                size={20}
+                color="#A5B2C2"
+              />
+            </Pressable>
+            {scopeMenuOpen && (
+              <View style={styles.scopeMenu}>
+                {SCOPE_OPTIONS.map((option) => (
+                  <Pressable
+                    key={option.value}
                     style={[
-                      styles.scopeMenuItemLabel,
-                      option.value === activeScope && styles.scopeMenuItemLabelActive,
+                      styles.scopeMenuItem,
+                      option.value === activeScope && styles.scopeMenuItemActive,
                     ]}
+                    onPress={() => handleScopeChange(option.value)}
+                    hitSlop={6}
                   >
-                    {option.label}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
-          )}
+                    <Text
+                      style={[
+                        styles.scopeMenuItemLabel,
+                        option.value === activeScope && styles.scopeMenuItemLabelActive,
+                      ]}
+                    >
+                      {option.label}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            )}
+          </View>
         </View>
-      </View>
 
       <View style={styles.searchRow}>
         <View style={styles.searchInputWrapper}>

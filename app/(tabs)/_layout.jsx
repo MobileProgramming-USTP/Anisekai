@@ -1,9 +1,14 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
-import { Platform, Pressable } from "react-native";
+import { Platform, Pressable, StyleSheet, View } from "react-native";
 import { LibraryProvider } from "../context/LibraryContext";
 
+const TAB_BAR_HEIGHT = 80;
+
 export default function TabsLayout() {
+  const tabBarBottomOffset = Platform.select({ ios: 24, default: 16 });
+  const tabBarTotalInset = TAB_BAR_HEIGHT + tabBarBottomOffset;
+
   return (
     <LibraryProvider>
       <Tabs
@@ -12,24 +17,40 @@ export default function TabsLayout() {
           tabBarActiveTintColor: "#fcbf49",
           tabBarInactiveTintColor: "#A5B2C2",
           tabBarShowLabel: true,
-        tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: "600",
-          marginBottom: Platform.OS === "ios" ? -5 : 0,
-        },
-        tabBarStyle: {
-          backgroundColor: "#0F1719",
-          borderTopWidth: 0,
-          height: 80,
-          paddingBottom: 10,
-          paddingTop: 5,
-          elevation: 10,
-          shadowColor: "#000",
-          shadowOpacity: 0.15,
-          shadowRadius: 8,
-        },
-        tabBarButton: (props) => <Pressable {...props} android_ripple={null} />,
-      }}
+          tabBarLabelStyle: {
+            fontSize: 12,
+            fontWeight: "600",
+            marginBottom: Platform.OS === "ios" ? -5 : 0,
+          },
+          tabBarStyle: {
+            backgroundColor: "#0F1719",
+            borderTopWidth: 0,
+            height: TAB_BAR_HEIGHT,
+            paddingBottom: 10,
+            paddingTop: 5,
+            elevation: 10,
+            shadowColor: "#000",
+            shadowOpacity: 0.15,
+            shadowRadius: 8,
+            position: "absolute",
+            bottom: tabBarBottomOffset,
+          },
+          sceneContainerStyle: {
+            paddingBottom: tabBarTotalInset,
+            backgroundColor: "#0F1719",
+          },
+          tabBarBackground: () => (
+            <View style={styles.tabBarBackground}>
+              <View
+                style={[
+                  styles.tabBarBackgroundExtension,
+                  { height: tabBarBottomOffset, bottom: -tabBarBottomOffset },
+                ]}
+              />
+            </View>
+          ),
+          tabBarButton: (props) => <Pressable {...props} android_ripple={null} />,
+        }}
     >
       <Tabs.Screen
         name="explore/index"
@@ -104,3 +125,16 @@ export default function TabsLayout() {
   </LibraryProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  tabBarBackground: {
+    flex: 1,
+    backgroundColor: "#0F1719",
+  },
+  tabBarBackgroundExtension: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    backgroundColor: "#0F1719",
+  },
+});
