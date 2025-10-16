@@ -446,34 +446,36 @@ const Profile = () => {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={styles.coverContainer}>
-        <View style={styles.coverProfileRow}>
-          <TouchableOpacity
-            style={[
-              styles.avatarFrame,
-              !isSignedIn && styles.avatarFrameDisabled,
-            ]}
-            onPress={handleEditProfile}
-            activeOpacity={0.85}
-            accessibilityRole="button"
-            accessibilityLabel={
-              isSignedIn ? "Edit profile" : "Sign in to edit your profile"
-            }
-          >
-            {sanitizedAvatar ? (
-              <Image source={{ uri: sanitizedAvatar }} style={styles.avatar} resizeMode="cover" />
-            ) : (
-              <View style={styles.avatarFallback}>
-                <Text style={styles.avatarFallbackText}>{avatarInitial}</Text>
-              </View>
-            )}
-          </TouchableOpacity>
+      <View style={styles.coverBackground}>
+        <View style={styles.coverContainer}>
+          <View style={styles.coverProfileRow}>
+            <TouchableOpacity
+              style={[
+                styles.avatarFrame,
+                !isSignedIn && styles.avatarFrameDisabled,
+              ]}
+              onPress={handleEditProfile}
+              activeOpacity={0.85}
+              accessibilityRole="button"
+              accessibilityLabel={
+                isSignedIn ? "Edit profile" : "Sign in to edit your profile"
+              }
+            >
+              {sanitizedAvatar ? (
+                <Image source={{ uri: sanitizedAvatar }} style={styles.avatar} resizeMode="cover" />
+              ) : (
+                <View style={styles.avatarFallback}>
+                  <Text style={styles.avatarFallbackText}>{avatarInitial}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
 
-          <View style={styles.profileDetails}>
-            <Text style={styles.username}>{displayName}</Text>
-            <Text style={styles.email}>
-              {user?.email ?? "Sign in to see your profile details"}
-            </Text>
+            <View style={styles.profileDetails}>
+              <Text style={styles.username}>{displayName}</Text>
+              <Text style={styles.email}>
+                {user?.email ?? "Sign in to see your profile details"}
+              </Text>
+            </View>
           </View>
         </View>
       </View>
