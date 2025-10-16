@@ -17,18 +17,18 @@ const profileStyles = StyleSheet.create({
   coverContainer: {
     backgroundColor: "#1E2A3A",
     paddingHorizontal: theme.spacing.large,
-    paddingTop: theme.spacing.xlarge,
-    paddingBottom: 0,
+    paddingTop: theme.spacing.xlarge + theme.spacing.medium,
+    paddingBottom: theme.spacing.medium,
   },
   coverProfileRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "flex-start",
-    marginBottom: theme.spacing.large,
+    marginBottom: theme.spacing.small + 2,
   },
   avatarFrame: {
-    width: 120,
-    height: 120,
+    width: 128,
+    height: 128,
     borderRadius: 18,
     overflow: "hidden",
     marginRight: theme.spacing.medium,
@@ -117,16 +117,18 @@ const profileStyles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
+    paddingHorizontal: theme.spacing.medium,
   },
   statSegmentDivider: {
     borderLeftWidth: 1,
     borderLeftColor: "rgba(255, 255, 255, 0.1)",
-    paddingLeft: theme.spacing.large,
+    paddingHorizontal: theme.spacing.medium,
   },
   statValue: {
     fontSize: theme.typography.sizes.large,
     fontWeight: theme.typography.weights.bold,
     color: ACCENT,
+    textAlign: "center",
   },
   statLabel: {
     fontSize: theme.typography.sizes.small,
@@ -134,6 +136,7 @@ const profileStyles = StyleSheet.create({
     marginTop: 4,
     textTransform: "uppercase",
     letterSpacing: 0.6,
+    textAlign: "center",
   },
   sectionHeader: {
     paddingHorizontal: theme.spacing.large,
@@ -151,7 +154,8 @@ const profileStyles = StyleSheet.create({
     color: theme.colors.text,
   },
   sectionTitleAccent: {
-    color: ACCENT,
+    color: "#A5B2C2",
+    fontSize: theme.typography.sizes.medium,
   },
   sectionSubtitle: {
     fontSize: theme.typography.sizes.small,
