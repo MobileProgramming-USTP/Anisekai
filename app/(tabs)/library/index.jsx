@@ -76,6 +76,8 @@ const LibraryScreen = () => {
     updateEntryProgress,
     updateEntryRating,
     defaultStatus: libraryDefaultStatus,
+    toggleFavoriteEntry,
+    isFavoriteEntry,
   } = useLibrary();
 
   const statusMeta = libraryStatusMeta || {};
@@ -101,7 +103,6 @@ const LibraryScreen = () => {
   const [progressInputValue, setProgressInputValue] = useState('');
   const [ratingModalVisible, setRatingModalVisible] = useState(false);
   const [ratingInputValue, setRatingInputValue] = useState('');
-  const [favoriteEntryIds, setFavoriteEntryIds] = useState(() => new Set());
 
   const activeScopeLabel = useMemo(
     () => SCOPE_OPTIONS.find((option) => option.value === activeScope)?.label ?? 'Anime',
@@ -141,11 +142,8 @@ const LibraryScreen = () => {
     typeof selectedEntry?.mal_id === 'number' ? selectedEntry.mal_id : null;
 
   const isSelectedFavorite = useMemo(
-    () =>
-      selectedEntryMalId != null
-        ? favoriteEntryIds.has(selectedEntryMalId)
-        : false,
-    [favoriteEntryIds, selectedEntryMalId]
+    () => (selectedEntryMalId != null ? isFavoriteEntry(selectedEntryMalId) : false),
+    [isFavoriteEntry, selectedEntryMalId]
   );
 
   const sectionsByStatus = useMemo(() => {
@@ -447,20 +445,6 @@ const LibraryScreen = () => {
       return;
     }
 
-    setFavoriteEntryIds((prev) => {
-      if (
-        selectedEntry.mal_id == null ||
-        typeof selectedEntry.mal_id !== 'number' ||
-        !prev.has(selectedEntry.mal_id)
-      ) {
-        return prev;
-      }
-
-      const next = new Set(prev);
-      next.delete(selectedEntry.mal_id);
-      return next;
-    });
-
     removeEntry(selectedEntry.mal_id);
     closeStatusPicker();
     handleCloseDetail();
@@ -590,16 +574,8 @@ const LibraryScreen = () => {
       return;
     }
 
-    setFavoriteEntryIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(selectedEntryMalId)) {
-        next.delete(selectedEntryMalId);
-      } else {
-        next.add(selectedEntryMalId);
-      }
-      return next;
-    });
-  }, [selectedEntryMalId]);
+    toggleFavoriteEntry(selectedEntryMalId);
+  }, [selectedEntryMalId, toggleFavoriteEntry]);
 
   const renderSection = (statusKey) => {
     const entriesForStatus = sectionsByStatus[statusKey] ?? [];

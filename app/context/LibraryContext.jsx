@@ -36,6 +36,19 @@ const DEFAULT_STATUS = LIBRARY_STATUS.WATCHING;
 
 const LibraryContext = createContext(null);
 
+const normalizeMalId = (value) => {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value === 'string') {
+    const numeric = Number(value);
+    return Number.isFinite(numeric) ? numeric : null;
+  }
+
+  return null;
+};
+
 const inferMediaScope = (media, fallbackScope) => {
   if (fallbackScope) {
     return fallbackScope;
@@ -161,6 +174,7 @@ export const LibraryProvider = ({ children }) => {
   const userId = user?.id ?? null;
 
   const [entriesById, setEntriesById] = useState({});
+  const [favoriteEntryIds, setFavoriteEntryIds] = useState(() => new Set());
 
   const remoteEntries = useQuery(
     api['functions/library'].list,
@@ -250,25 +264,37 @@ export const LibraryProvider = ({ children }) => {
 
   const removeEntry = useCallback(
     (malId) => {
-      if (malId == null) {
+      const normalizedMalId = normalizeMalId(malId);
+      if (normalizedMalId == null) {
         return;
       }
 
       let hadEntry = false;
       setEntriesById((prev) => {
-        if (!prev[malId]) {
+        if (!prev[normalizedMalId]) {
           return prev;
         }
         hadEntry = true;
         const next = { ...prev };
-        delete next[malId];
+        delete next[normalizedMalId];
         return next;
       });
 
-      if (hadEntry && userId) {
-        removeEntryMutation({ userId, malId }).catch((error) => {
-          console.error('Failed to remove library entry', error);
+      if (hadEntry) {
+        setFavoriteEntryIds((prev) => {
+          if (!prev.has(normalizedMalId)) {
+            return prev;
+          }
+          const next = new Set(prev);
+          next.delete(normalizedMalId);
+          return next;
         });
+
+        if (userId) {
+          removeEntryMutation({ userId, malId: normalizedMalId }).catch((error) => {
+            console.error('Failed to remove library entry', error);
+          });
+        }
       }
     },
     [removeEntryMutation, userId]
@@ -419,7 +445,39 @@ export const LibraryProvider = ({ children }) => {
 
   const resetLibrary = useCallback(() => {
     setEntriesById({});
+    setFavoriteEntryIds(() => new Set());
   }, []);
+
+  const toggleFavoriteEntry = useCallback((malId) => {
+    const normalizedMalId = normalizeMalId(malId);
+    if (normalizedMalId == null) {
+      return;
+    }
+
+    setFavoriteEntryIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(normalizedMalId)) {
+        next.delete(normalizedMalId);
+      } else {
+        next.add(normalizedMalId);
+      }
+      return next;
+    });
+  }, []);
+
+  const isFavoriteEntry = useCallback(
+    (malId) => favoriteEntryIds.has(normalizeMalId(malId)),
+    [favoriteEntryIds]
+  );
+
+  const favoriteEntries = useMemo(
+    () =>
+      Object.values(entriesById).filter((entry) => {
+        const normalizedMalId = normalizeMalId(entry?.mal_id ?? entry?.id);
+        return normalizedMalId != null && favoriteEntryIds.has(normalizedMalId);
+      }),
+    [entriesById, favoriteEntryIds]
+  );
 
   const resolveStatusLabel = useCallback((statusKey, scope) => {
     const meta = LIBRARY_STATUS_META[statusKey];
@@ -446,6 +504,10 @@ export const LibraryProvider = ({ children }) => {
       updateEntryProgress,
       updateEntryRating,
       resetLibrary,
+      toggleFavoriteEntry,
+      isFavoriteEntry,
+      favoriteEntries,
+      favoriteEntryIds,
       statuses: LIBRARY_STATUS,
       statusMeta: LIBRARY_STATUS_META,
       statusOrder: LIBRARY_STATUS_ORDER,
@@ -461,6 +523,10 @@ export const LibraryProvider = ({ children }) => {
       updateEntryProgress,
       updateEntryRating,
       resetLibrary,
+      toggleFavoriteEntry,
+      isFavoriteEntry,
+      favoriteEntries,
+      favoriteEntryIds,
       resolveStatusLabel,
       userId,
     ]

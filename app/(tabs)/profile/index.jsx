@@ -15,6 +15,7 @@ const PROFILE_TABS = [
 const AVATAR_PLACEHOLDER = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
 
 const MAX_FAVORITES = 6;
+const EMPTY_SET = new Set();
 
 const getEntryScore = (entry) => {
   if (typeof entry?.rating === "number" && Number.isFinite(entry.rating)) {
@@ -25,12 +26,36 @@ const getEntryScore = (entry) => {
   return Number.isFinite(fallbackScore) ? fallbackScore : null;
 };
 
-const pickFavoriteEntries = (collection) => {
-  if (!Array.isArray(collection) || !collection.length) {
+const pickFavoriteEntries = (collection, favoriteIds) => {
+  const isValidFavoriteSet =
+    favoriteIds instanceof Set && favoriteIds.size > 0;
+
+  if (!Array.isArray(collection) || !collection.length || !isValidFavoriteSet) {
     return [];
   }
 
-  const ranked = [...collection]
+  const resolveFavoriteId = (entry) => {
+    const primary = entry?.mal_id ?? entry?.id;
+    if (typeof primary === "number" && Number.isFinite(primary)) {
+      return primary;
+    }
+    if (typeof primary === "string") {
+      const numeric = Number(primary);
+      return Number.isFinite(numeric) ? numeric : null;
+    }
+    return null;
+  };
+
+  const filtered = collection.filter((entry) => {
+    const favoriteId = resolveFavoriteId(entry);
+    return favoriteId != null && favoriteIds.has(favoriteId);
+  });
+
+  if (!filtered.length) {
+    return [];
+  }
+
+  const ranked = filtered
     .map((entry) => ({
       entry,
       score: getEntryScore(entry),
@@ -48,35 +73,21 @@ const pickFavoriteEntries = (collection) => {
   const favorites = [];
   const seen = new Set();
 
-  ranked.forEach(({ entry, score }) => {
+  for (const item of ranked) {
     if (favorites.length >= MAX_FAVORITES) {
-      return;
+      break;
     }
 
-    const id = entry?.mal_id ?? entry?.id ?? entry?.title;
-    if (id == null || seen.has(id) || score == null) {
-      return;
+    const favoriteId = resolveFavoriteId(item.entry);
+    if (favoriteId == null || seen.has(favoriteId)) {
+      continue;
     }
 
-    favorites.push(entry);
-    seen.add(id);
-  });
+    favorites.push(item.entry);
+    seen.add(favoriteId);
+  }
 
-  ranked.forEach(({ entry }) => {
-    if (favorites.length >= MAX_FAVORITES) {
-      return;
-    }
-
-    const id = entry?.mal_id ?? entry?.id ?? entry?.title;
-    if (id == null || seen.has(id)) {
-      return;
-    }
-
-    favorites.push(entry);
-    seen.add(id);
-  });
-
-  return favorites.slice(0, MAX_FAVORITES);
+  return favorites;
 };
 
 const formatNumber = (value, fractionDigits = 0) => {
@@ -106,7 +117,10 @@ const Profile = () => {
     resolveStatusLabel,
     statusMeta = {},
     statusOrder = [],
+    favoriteEntryIds,
   } = useLibrary();
+
+  const favoriteIdsSet = favoriteEntryIds instanceof Set ? favoriteEntryIds : EMPTY_SET;
 
   const [activeTab, setActiveTab] = useState("overview");
 
@@ -259,13 +273,13 @@ const Profile = () => {
   );
 
   const favoriteAnimeEntries = useMemo(
-    () => pickFavoriteEntries(segregatedEntries.anime),
-    [segregatedEntries.anime],
+    () => pickFavoriteEntries(segregatedEntries.anime, favoriteIdsSet),
+    [segregatedEntries.anime, favoriteIdsSet],
   );
 
   const favoriteMangaEntries = useMemo(
-    () => pickFavoriteEntries(segregatedEntries.manga),
-    [segregatedEntries.manga],
+    () => pickFavoriteEntries(segregatedEntries.manga, favoriteIdsSet),
+    [segregatedEntries.manga, favoriteIdsSet],
   );
 
   const activityItems = useMemo(() => {
@@ -636,7 +650,7 @@ const Profile = () => {
               <View style={styles.emptyStateCard}>
                 <Text style={styles.emptyStateText}>
                   {isSignedIn
-                    ? "Rate your anime or keep watching to build your favorites."
+                    ? "Mark anime as favorites in your library to see them here."
                     : "Sign in to curate a list of favorite anime."}
                 </Text>
               </View>
@@ -732,7 +746,7 @@ const Profile = () => {
               <View style={styles.emptyStateCard}>
                 <Text style={styles.emptyStateText}>
                   {isSignedIn
-                    ? "Rate your manga or keep reading to build your favorites."
+                    ? "Mark manga as favorites in your library to see them here."
                     : "Sign in to curate a list of favorite manga."}
                 </Text>
               </View>
