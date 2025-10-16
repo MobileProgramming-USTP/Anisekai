@@ -16,7 +16,7 @@ const profileStyles = StyleSheet.create({
   },
   coverBackground: {
     backgroundColor: "#1E2A3A",
-    paddingTop: theme.spacing.large,
+    paddingTop: theme.spacing.medium,
   },
   coverContainer: {
     backgroundColor: "#1E2A3A",
