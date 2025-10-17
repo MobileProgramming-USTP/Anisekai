@@ -2,6 +2,7 @@ import { Pressable, Text, View } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import styles from '../../../styles/exploreStyles';
+import { resolvePreferredTitle } from '../../utils/resolveTitle';
 
 const MediaCard = ({
   item,
@@ -10,7 +11,7 @@ const MediaCard = ({
   badgeLabel = null,
   badgeColor = null,
 }) => {
-  const title = item?.title || item?.name || item?.username || 'Untitled';
+  const title = resolvePreferredTitle(item);
   const imageUrl =
     item?.images?.jpg?.large_image_url ||
     item?.images?.jpg?.image_url ||

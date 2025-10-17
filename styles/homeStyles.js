@@ -66,6 +66,7 @@ const homeStyles = StyleSheet.create({
     overflow: "hidden",
     backgroundColor: "#121A21",
     marginBottom: theme.spacing.small,
+    position: "relative",
   },
   episodeImage: {
     width: "100%",
@@ -79,21 +80,18 @@ const homeStyles = StyleSheet.create({
   episodeImageOverlay: {
     ...StyleSheet.absoluteFillObject,
   },
-  episodeBadge: {
+  episodeBadgeText: {
     position: "absolute",
     left: theme.spacing.small,
     bottom: theme.spacing.small,
-    backgroundColor: "#FFB300",
-    paddingHorizontal: theme.spacing.small + 2,
-    paddingVertical: theme.spacing.xsmall + 1,
-    borderRadius: theme.radius.small,
-  },
-  episodeBadgeText: {
     fontSize: theme.typography.sizes.xsmall + 2,
     fontWeight: theme.typography.weights.bold,
-    color: "#090D12",
-    letterSpacing: 0.6,
+    color: "#FFB300",
     textTransform: "uppercase",
+    letterSpacing: 0.6,
+    textShadowColor: "rgba(0, 0, 0, 0.65)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
   episodeFallbackText: {
     fontSize: theme.typography.sizes.large + 2,
@@ -103,11 +101,13 @@ const homeStyles = StyleSheet.create({
   episodeDetails: {
     minHeight: 52,
     justifyContent: "flex-start",
+    marginTop: theme.spacing.xsmall,
   },
   episodeTitle: {
     color: "#E7EDF5",
     fontSize: theme.typography.sizes.small,
     fontWeight: theme.typography.weights.medium,
+    letterSpacing: 0.6,
   },
   emptyStateText: {
     fontSize: theme.typography.sizes.small,

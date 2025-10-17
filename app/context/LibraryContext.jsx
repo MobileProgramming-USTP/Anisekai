@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { useAuth } from './AuthContext';
+import { resolvePreferredTitle } from '../../src/utils/resolveTitle';
 
 export const LIBRARY_STATUS = {
   WATCHING: 'watching',
@@ -86,7 +87,7 @@ const buildLibraryEntry = (media, status, scope) => {
     mal_id: id,
     status,
     scope: inferMediaScope(media, scope),
-    title: media?.title || media?.name || media?.username || 'Untitled',
+    title: resolvePreferredTitle(media),
     coverImage,
     score: typeof media?.score === 'number' ? media.score : null,
     episodes: typeof media?.episodes === 'number' ? media.episodes : null,
@@ -158,6 +159,7 @@ const fromBackendEntry = (entry) => {
     ...entry,
     id: entry?.id ?? malId,
     mal_id: malId,
+    title: resolvePreferredTitle(entry?.raw ?? entry, entry?.title ?? 'Untitled'),
     progress: ensureProgressShape(entry?.progress),
     rating: sanitizeNullableNumber(entry?.rating),
     score: sanitizeNullableNumber(entry?.score),

@@ -7,6 +7,7 @@ import { useRouter } from "expo-router";
 import styles from "../../../styles/homeStyles";
 import { JIKAN_API_URL } from "../../../src/explore/constants";
 import { fetchJsonWithRetry } from "../../../src/explore/utils/api";
+import { resolvePreferredTitle } from "../../../src/utils/resolveTitle";
 
 const HERO_LOGO = require("../../login/assets/anisekai.png");
 const HERO_BACKGROUND = require("../../../assets/images/anime-collage.png");
@@ -22,25 +23,32 @@ const resolveEpisodeImage = (entry, episode) =>
   entry?.images?.webp?.image_url ||
   null;
 
-const formatAiredDate = (value) => {
-  if (typeof value !== "string" || !value.trim()) {
-    return null;
+const buildEnglishTitleMap = async (entries = []) => {
+  const validEntries = Array.isArray(entries)
+    ? entries.filter((entry) => entry?.mal_id && Number.isFinite(entry.mal_id))
+    : [];
+
+  if (!validEntries.length) {
+    return new Map();
   }
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
-    return null;
-  }
-  try {
-    return parsed.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-    });
-  } catch (error) {
-    return null;
-  }
+
+  const results = await Promise.all(
+    validEntries.map(async (entry) => {
+      try {
+        const details = await fetchJsonWithRetry(`${JIKAN_API_URL}/anime/${entry.mal_id}`);
+        const englishTitle = resolvePreferredTitle(details?.data, resolvePreferredTitle(entry));
+        return [entry.mal_id, englishTitle];
+      } catch (error) {
+        console.warn(`Failed to fetch english title for mal_id ${entry.mal_id}`, error);
+        return [entry.mal_id, resolvePreferredTitle(entry)];
+      }
+    })
+  );
+
+  return new Map(results);
 };
 
-const normalizeLatestEpisodes = (payload = []) =>
+const normalizeLatestEpisodes = (payload = [], titleLookup = new Map()) =>
   payload
     .map((item) => {
       if (!item) {
@@ -60,18 +68,6 @@ const normalizeLatestEpisodes = (payload = []) =>
           : Number.isFinite(latestEpisode?.mal_id)
             ? latestEpisode.mal_id
             : null;
-
-      const detailParts = [];
-      if (typeof latestEpisode?.title === "string" && latestEpisode.title.trim()) {
-        detailParts.push(latestEpisode.title.trim());
-      }
-      const airedDisplay = formatAiredDate(
-        (typeof latestEpisode?.aired === "string" ? latestEpisode.aired : null) ??
-          (typeof latestEpisode?.aired_at === "string" ? latestEpisode.aired_at : null)
-      );
-      if (airedDisplay) {
-        detailParts.push(airedDisplay);
-      }
 
       const normalizeTotal = (value) => {
         if (typeof value === "number" && Number.isFinite(value) && value > 0) {
@@ -95,11 +91,19 @@ const normalizeLatestEpisodes = (payload = []) =>
         latestEpisode?.mal_id ??
         `${entry?.title ?? "episode"}-${episodeNumber ?? Math.random().toString(36).slice(2)}`;
 
+      const fallbackTitle =
+        typeof latestEpisode?.title === "string" ? latestEpisode.title.trim() : undefined;
+      const displayTitle =
+        (entry?.mal_id && titleLookup.get(entry.mal_id)) ??
+        resolvePreferredTitle(
+          entry,
+          resolvePreferredTitle(latestEpisode, fallbackTitle || "Untitled")
+        );
+
       return {
         id,
-        title: entry?.title ?? latestEpisode?.title ?? "Untitled",
+        title: displayTitle,
         episodeNumber,
-        episodeDetail: detailParts.length ? detailParts.join(" \u2022 ") : null,
         totalEpisodes: totalEpisodesRaw,
         coverImage,
       };
@@ -134,7 +138,9 @@ const bottomInset = tabBarHeight + 32;
           return;
         }
 
-        const normalized = normalizeLatestEpisodes(response?.data ?? []).slice(0, 6);
+        const rawData = response?.data ?? [];
+        const englishMap = await buildEnglishTitleMap(rawData.map((item) => item?.entry).filter(Boolean));
+        const normalized = normalizeLatestEpisodes(rawData, englishMap).slice(0, 6);
         setLatestEpisodes(normalized);
       } catch (error) {
         if (!isMounted || error?.name === "AbortError") {
@@ -221,9 +227,7 @@ const bottomInset = tabBarHeight + 32;
                     style={styles.episodeImageOverlay}
                   />
                   {episode.episodeNumber ? (
-                    <View style={styles.episodeBadge}>
-                      <Text style={styles.episodeBadgeText}>Episode {episode.episodeNumber}</Text>
-                    </View>
+                    <Text style={styles.episodeBadgeText}>Episode {episode.episodeNumber}</Text>
                   ) : null}
                 </View>
                 <View style={styles.episodeDetails}>
