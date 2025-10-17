@@ -18,13 +18,52 @@ const PROFILE_TABS = [
 const MAX_FAVORITES = 6;
 const EMPTY_SET = new Set();
 
-const getEntryScore = (entry) => {
-  if (typeof entry?.rating === "number" && Number.isFinite(entry.rating)) {
-    return entry.rating;
+const toFiniteNumber = (value) => {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
   }
 
-  const fallbackScore = Number(entry?.score);
-  return Number.isFinite(fallbackScore) ? fallbackScore : null;
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed.length) {
+      return null;
+    }
+    const numeric = Number(trimmed);
+    return Number.isFinite(numeric) ? numeric : null;
+  }
+
+  return null;
+};
+
+const getEntryScore = (entry) => {
+  const userRating = toFiniteNumber(entry?.rating);
+  if (userRating != null) {
+    return userRating;
+  }
+
+  return toFiniteNumber(entry?.score);
+};
+
+const computeScoreMetrics = (collection) => {
+  if (!Array.isArray(collection) || !collection.length) {
+    return { mean: 0, count: 0 };
+  }
+
+  const values = collection
+    .map(getEntryScore)
+    .filter((value) => typeof value === "number" && Number.isFinite(value));
+
+  if (!values.length) {
+    return { mean: 0, count: 0 };
+  }
+
+  const total = values.reduce((acc, value) => acc + value, 0);
+  const mean = total / values.length;
+
+  return {
+    mean: Math.min(100, mean),
+    count: values.length,
+  };
 };
 
 const pickFavoriteEntries = (collection, favoriteIds) => {
@@ -153,6 +192,14 @@ const Profile = () => {
 
   const [activeTab, setActiveTab] = useState("overview");
 
+  const sortedEntries = useMemo(() => {
+    if (!Array.isArray(entries) || !entries.length) {
+      return [];
+    }
+
+    return [...entries].sort((a, b) => (b?.updatedAt ?? 0) - (a?.updatedAt ?? 0));
+  }, [entries]);
+
   const handleLogout = () => {
     signOut();
     router.replace("/login/login");
@@ -172,7 +219,7 @@ const Profile = () => {
     const anime = [];
     const manga = [];
 
-    entries.forEach((entry) => {
+    sortedEntries.forEach((entry) => {
       const scope = (entry?.scope ?? "anime").toLowerCase();
       if (scope === "manga") {
         manga.push(entry);
@@ -182,22 +229,11 @@ const Profile = () => {
     });
 
     return { anime, manga };
-  }, [entries]);
+  }, [sortedEntries]);
 
   const stats = useMemo(() => {
-    const averageScore = (collection) => {
-      const values = collection
-        .map(getEntryScore)
-        .filter((value) => value != null && Number.isFinite(value));
-
-      if (values.length === 0) {
-        return 0;
-      }
-
-      const total = values.reduce((acc, value) => acc + value, 0);
-      return total / values.length;
-    };
-
+    const animeScores = computeScoreMetrics(segregatedEntries.anime);
+    const mangaScores = computeScoreMetrics(segregatedEntries.manga);
     const totalEpisodes = segregatedEntries.anime.reduce(
       (acc, entry) => acc + (entry?.progress?.watchedEpisodes ?? 0),
       0,
@@ -208,16 +244,23 @@ const Profile = () => {
       0,
     );
 
+    const formatScoreStat = (metrics) => {
+      if (!metrics.count) {
+        return "0.0";
+      }
+      return formatNumber(metrics.mean, 1);
+    };
+
     return [
       [
         { label: "Total Animes", value: formatNumber(segregatedEntries.anime.length) },
         { label: "Episodes Watched", value: formatNumber(totalEpisodes) },
-        { label: "Total Score", value: formatNumber(averageScore(segregatedEntries.anime), 1) },
+        { label: "Mean Score", value: formatScoreStat(animeScores) },
       ],
       [
         { label: "Total Manga", value: formatNumber(segregatedEntries.manga.length) },
         { label: "Chapters Read", value: formatNumber(totalChapters) },
-        { label: "Total Score", value: formatNumber(averageScore(segregatedEntries.manga), 1) },
+        { label: "Mean Score", value: formatScoreStat(mangaScores) },
       ],
     ];
   }, [segregatedEntries]);
@@ -312,12 +355,11 @@ const Profile = () => {
   );
 
   const activityItems = useMemo(() => {
-    if (!entries.length) {
+    if (!sortedEntries.length) {
       return [];
     }
 
-    return [...entries]
-      .sort((a, b) => (b?.updatedAt ?? 0) - (a?.updatedAt ?? 0))
+    return sortedEntries
       .slice(0, 5)
       .map((entry, index) => {
         const scope = (entry?.scope ?? "anime").toLowerCase();
@@ -356,7 +398,7 @@ const Profile = () => {
           coverImage: entry?.coverImage ?? null,
         };
       });
-  }, [entries, resolveStatusLabel]);
+  }, [resolveStatusLabel, sortedEntries]);
 
   const renderLibraryCard = (entry, scopeKey, cardIndex = 0) => {
     const isAnime = scopeKey === "anime";
