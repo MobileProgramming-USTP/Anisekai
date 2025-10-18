@@ -241,11 +241,6 @@ const homeStyles = StyleSheet.create({
     fontSize: theme.typography.sizes.small + 1,
     lineHeight: 20,
   },
-  recommendationReason: {
-    color: ACCENT,
-    marginTop: theme.spacing.small,
-    fontSize: theme.typography.sizes.small,
-  },
 });
 
 export default homeStyles;

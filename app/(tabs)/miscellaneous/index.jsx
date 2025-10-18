@@ -87,8 +87,8 @@ const styles = StyleSheet.create({
     paddingTop: 60,
   },
   header: {
-    fontSize: 28,
-    fontWeight: 'bold',
+    fontSize: 32,
+    fontWeight: '800',
     color: 'white',
     paddingHorizontal: 20,
     marginBottom: 30,

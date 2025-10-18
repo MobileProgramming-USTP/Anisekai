@@ -294,6 +294,7 @@ const Home = () => {
                 item.type,
                 item.genres && item.genres.length ? item.genres.join(", ") : null,
               ].filter(Boolean);
+
               return (
                 <View key={item.id} style={styles.recommendationCard}>
                   <Text style={styles.recommendationTitle}>{item.title}</Text>
@@ -302,9 +303,6 @@ const Home = () => {
                   ) : null}
                   {item.synopsis ? (
                     <Text style={styles.recommendationSynopsis}>{item.synopsis}</Text>
-                  ) : null}
-                  {item.reason ? (
-                    <Text style={styles.recommendationReason}>{item.reason}</Text>
                   ) : null}
                 </View>
               );
