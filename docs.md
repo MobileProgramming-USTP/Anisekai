@@ -11,9 +11,13 @@
    - Preferred: set `EXPO_PUBLIC_CONVEX_URL` in `.env` or `app.json`.
    - Alternative: add `convexDevUrl` / `convexProdUrl` under `expo.extra` in `app.json`.
 3. Provide external API endpoints via environment variables:
-   - `EXPO_PUBLIC_JIKAN_API_URL` – base URL for Jikan data.
-   - `EXPO_PUBLIC_TRACE_API_URL` – endpoint for Trace.moe lookups.
-   - `EXPO_PUBLIC_WAIFU_API_BASE` – Waifu.pics SFW API root.
+   - `EXPO_PUBLIC_JIKAN_API_URL` - base URL for Jikan data.
+   - `EXPO_PUBLIC_TRACE_API_URL` - endpoint for Trace.moe lookups.
+   - `EXPO_PUBLIC_WAIFU_API_BASE` - Waifu.pics SFW API root.
+   - `EXPO_PUBLIC_GEMINI_API_KEY` - Google Gemini key powering AI recommendations on Home.
+     - Create it in [Google AI Studio](https://ai.google.dev/) or the Cloud Console with the *Generative Language API* enabled.
+     - Remove key restrictions or allow the origins you build from (mobile requests have no HTTP referrer).
+     - After adding the key to `.env.local`, restart the Expo dev server so the new value is bundled.
 4. Launch the dev server: `npx expo start`.
 5. Convex backend: run `npx convex dev` in a separate terminal to start the Convex function server.
 
