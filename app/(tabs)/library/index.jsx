@@ -12,6 +12,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { Image as ExpoImage } from 'expo-image';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLibrary } from '../../context/LibraryContext';
 
 const SCOPE_OPTIONS = [
@@ -80,6 +81,7 @@ const LibraryScreen = () => {
     toggleFavoriteEntry,
     isFavoriteEntry,
   } = useLibrary();
+  const insets = useSafeAreaInsets();
 
   const statusMeta = libraryStatusMeta || {};
   const statusOrder = useMemo(
@@ -855,13 +857,18 @@ const LibraryScreen = () => {
           animationType="slide"
           onRequestClose={handleCloseDetail}
         >
-          <View style={styles.detailScreen}>
+          <View
+            style={[
+              styles.detailScreen,
+              { paddingTop: Math.max(insets.top +40, 16) },
+            ]}
+          >
             <Pressable
-              style={styles.detailCloseButton}
+              style={[styles.detailCloseButton, { top: insets.top + 8 }]}
               onPress={handleCloseDetail}
               hitSlop={8}
             >
-              <Ionicons name="close" size={22} color="#A5B2C2" />
+              <Ionicons name="close" size={20} color="#E7EDF5" />
             </Pressable>
             <ScrollView
               style={styles.detailScroll}
@@ -1454,22 +1461,27 @@ const styles = StyleSheet.create({
   detailScreen: {
     flex: 1,
     backgroundColor: '#0F1719',
-    paddingTop: 24,
+    paddingTop: 0,
   },
   detailCloseButton: {
     position: 'absolute',
-    top: 24,
-    right: 24,
-    zIndex: 20,
-    backgroundColor: 'rgba(4, 13, 18, 0.85)',
-    padding: 8,
-    borderRadius: 18,
+    top: 16,
+    left: 16,
+    zIndex: 24,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(15, 23, 25, 0.88)',
+    borderWidth: 1,
+    borderColor: 'rgba(231, 237, 245, 0.08)',
   },
   detailScroll: {
     flex: 1,
   },
   detailScrollContent: {
-    paddingTop: 56,
+    paddingTop: 32,
     paddingBottom: 48,
     paddingHorizontal: 24,
   },

@@ -1,0 +1,14 @@
+*** Begin Patch
+*** Update File: src\\explore\\components\\ExploreDetailView.jsx
+@@
+-      <ScrollView
+-      style={styles.container}
+-      contentContainerStyle={styles.detailScrollContent}
+-      showsVerticalScrollIndicator={false}
+-    >
++      <ScrollView
++        style={styles.container}
++        contentContainerStyle={styles.detailScrollContent}
++        showsVerticalScrollIndicator={false}
++      >
+*** End Patch

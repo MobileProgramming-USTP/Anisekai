@@ -636,6 +636,7 @@ const ExploreScreen = () => {
         libraryDefaultStatus={libraryDefaultStatus}
         upsertLibraryEntry={upsertLibraryEntry}
         removeLibraryEntry={removeLibraryEntry}
+        onClose={handleBackToBrowse}
       />
     );
   }

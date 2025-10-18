@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Image as ExpoImage } from 'expo-image';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import styles from '../../../styles/exploreStyles';
 import { SCOPE_VALUES } from '../constants';
 import { getItemKey } from '../utils/items';
@@ -18,9 +19,29 @@ const ExploreDetailView = ({
   libraryDefaultStatus,
   upsertLibraryEntry,
   removeLibraryEntry,
+  onClose,
 }) => {
   const [statusPickerVisible, setStatusPickerVisible] = useState(false);
   const [statusSelection, setStatusSelection] = useState(null);
+  const insets = useSafeAreaInsets();
+
+  const handleClosePress = () => {
+    if (typeof onClose === 'function') {
+      onClose();
+    }
+  };
+
+  const renderCloseButton = () => (
+    <Pressable
+      style={[styles.detailCloseFab, { top: insets.top }]}
+      onPress={handleClosePress}
+      hitSlop={12}
+      accessibilityRole="button"
+      accessibilityLabel="Close detail view"
+    >
+      <Ionicons name="close" size={20} color="#E7EDF5" />
+    </Pressable>
+  );
 
   useEffect(() => {
     setStatusPickerVisible(false);
@@ -69,52 +90,55 @@ const ExploreDetailView = ({
         : '';
 
     return (
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={styles.detailScrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.detailCard}>
-          <View style={styles.detailCoverWrapper}>
-            {coverImage ? (
-              <ExpoImage
-                source={{ uri: coverImage }}
-                style={styles.detailCoverImage}
-                contentFit="cover"
-                transition={200}
-                cachePolicy="memory-disk"
-              />
-            ) : (
-              <View style={[styles.detailCoverImage, styles.cardImageFallback]}>
-                <Ionicons name="image-outline" size={28} color="#6f7a89" />
-              </View>
-            )}
-          </View>
-          <View style={[styles.detailHeaderInfo, styles.characterHeaderInfo]}>
-            <Text style={styles.detailTitle}>{characterName}</Text>
-            {kanjiName ? <Text style={styles.detailSubtitle}>{kanjiName}</Text> : null}
-            <View style={styles.detailMetaRow}>
-              <Ionicons name="heart" size={18} color="#f55f5f" />
-              <Text style={styles.detailMetaText}>{favoritesText}</Text>
+      <View style={styles.detailContainer}>
+        {renderCloseButton()}
+        <ScrollView
+          style={styles.container}
+          contentContainerStyle={styles.detailScrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.detailCard}>
+            <View style={styles.detailCoverWrapper}>
+              {coverImage ? (
+                <ExpoImage
+                  source={{ uri: coverImage }}
+                  style={styles.detailCoverImage}
+                  contentFit="cover"
+                  transition={200}
+                  cachePolicy="memory-disk"
+                />
+              ) : (
+                <View style={[styles.detailCoverImage, styles.cardImageFallback]}>
+                  <Ionicons name="image-outline" size={28} color="#6f7a89" />
+                </View>
+              )}
             </View>
-            {nicknameList.length > 0 ? (
-              <View style={styles.characterAliasContainer}>
-                <Text style={styles.characterAliasLabel}>A.K.A</Text>
-                <Text style={styles.characterAliasText}>{aliasText}</Text>
+            <View style={[styles.detailHeaderInfo, styles.characterHeaderInfo]}>
+              <Text style={styles.detailTitle}>{characterName}</Text>
+              {kanjiName ? <Text style={styles.detailSubtitle}>{kanjiName}</Text> : null}
+              <View style={styles.detailMetaRow}>
+                <Ionicons name="heart" size={18} color="#f55f5f" />
+                <Text style={styles.detailMetaText}>{favoritesText}</Text>
               </View>
-            ) : null}
+              {nicknameList.length > 0 ? (
+                <View style={styles.characterAliasContainer}>
+                  <Text style={styles.characterAliasLabel}>A.K.A</Text>
+                  <Text style={styles.characterAliasText}>{aliasText}</Text>
+                </View>
+              ) : null}
+            </View>
           </View>
-        </View>
 
-        {detailError ? (
-          <Text style={[styles.errorText, styles.detailInlineError]}>{detailError}</Text>
-        ) : null}
+          {detailError ? (
+            <Text style={[styles.errorText, styles.detailInlineError]}>{detailError}</Text>
+          ) : null}
 
-        <View style={styles.detailSummarySection}>
-          <Text style={styles.detailSectionHeading}>About</Text>
-          <Text style={styles.detailSummaryText}>{aboutText}</Text>
-        </View>
-      </ScrollView>
+          <View style={styles.detailSummarySection}>
+            <Text style={styles.detailSectionHeading}>About</Text>
+            <Text style={styles.detailSummaryText}>{aboutText}</Text>
+          </View>
+        </ScrollView>
+      </View>
     );
   }
 
@@ -211,11 +235,13 @@ const ExploreDetailView = ({
   };
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.detailScrollContent}
-      showsVerticalScrollIndicator={false}
-    >
+    <View style={styles.detailContainer}>
+      {renderCloseButton()}
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.detailScrollContent}
+        showsVerticalScrollIndicator={false}
+      >
       <View style={styles.detailCard}>
         <View style={styles.detailCoverWrapper}>
           {coverImage ? (
@@ -302,6 +328,7 @@ const ExploreDetailView = ({
         <Text style={styles.detailSummaryText}>{synopsis}</Text>
       </View>
 
+    </ScrollView>
       <Modal
         visible={statusPickerVisible}
         transparent
@@ -362,7 +389,7 @@ const ExploreDetailView = ({
           </View>
         </View>
       </Modal>
-    </ScrollView>
+    </View>
   );
 };
 

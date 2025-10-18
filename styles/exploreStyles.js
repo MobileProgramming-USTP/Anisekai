@@ -9,11 +9,16 @@ const exploreStyles = StyleSheet.create({
     paddingBottom: 40,
   },
   detailScrollContent: {
+    paddingTop: 88,
     paddingBottom: 60,
     paddingHorizontal: 20,
   },
+  detailContainer: {
+    flex: 1,
+    backgroundColor: '#0F1719',
+  },
   detailCard: {
-    marginTop: 60,
+    marginTop: 24,
     flexDirection: 'row',
     alignItems: 'flex-start',
   },
@@ -115,6 +120,19 @@ const exploreStyles = StyleSheet.create({
   },
   detailSummarySection: {
     marginTop: 28,
+  },
+  detailCloseFab: {
+    position: 'absolute',
+    left: 16,
+    zIndex: 30,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(15, 23, 25, 0.88)',
+    borderWidth: 1,
+    borderColor: 'rgba(231, 237, 245, 0.08)',
   },
   detailSummaryText: {
     color: '#E7EDF5',

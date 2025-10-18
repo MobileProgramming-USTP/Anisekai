@@ -9,7 +9,9 @@ import {
   Text,
   View,
 } from "react-native";
-import { Stack } from "expo-router";
+import { Stack, useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import fetchLatestStreamingEpisodes from "../src/data/latestEpisodes";
 
@@ -34,6 +36,8 @@ const formatReleaseDate = (isoDate) => {
 };
 
 const LatestEpisodesScreen = () => {
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [episodes, setEpisodes] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState(null);
@@ -161,7 +165,7 @@ const LatestEpisodesScreen = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top + 16 }]}>
       <Stack.Screen
         options={{
           title: "Latest Episodes",
@@ -169,6 +173,16 @@ const LatestEpisodesScreen = () => {
           headerTintColor: "#fff",
         }}
       />
+
+      <Pressable
+        style={[styles.closeButton, { top: insets.top + 16 }]}
+        onPress={() => router.back()}
+        hitSlop={12}
+        accessibilityRole="button"
+        accessibilityLabel="Close latest episodes"
+      >
+        <Ionicons name="close" size={22} color="#E7EDF5" />
+      </Pressable>
 
       {renderedContent ? (
         renderedContent
@@ -192,8 +206,20 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#0F1719",
     paddingHorizontal: 20,
-    paddingTop: 24,
     paddingBottom: 16,
+  },
+  closeButton: {
+    position: "absolute",
+    left: 16,
+    zIndex: 10,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(15, 23, 25, 0.85)",
+    borderWidth: 1,
+    borderColor: "rgba(231, 237, 245, 0.08)",
   },
   centerContent: {
     flex: 1,
@@ -207,6 +233,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   listContent: {
+    paddingTop: 76,
     paddingBottom: 24,
   },
   episodeRow: {
