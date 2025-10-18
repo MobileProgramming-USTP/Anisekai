@@ -5,115 +5,15 @@ import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useRouter } from "expo-router";
 
 import styles from "../../../styles/homeStyles";
-import { JIKAN_API_URL } from "../../../src/explore/constants";
-import { fetchJsonWithRetry } from "../../../src/explore/utils/api";
-import { resolvePreferredTitle } from "../../../src/utils/resolveTitle";
+import fetchLatestStreamingEpisodes from "../../../src/data/latestEpisodes";
 
 const HERO_LOGO = require("../../login/assets/anisekai.png");
 const HERO_BACKGROUND = require("../../../assets/images/anime-collage.png");
 
-const resolveEpisodeImage = (entry, episode) =>
-  episode?.images?.jpg?.large_image_url ||
-  episode?.images?.jpg?.image_url ||
-  episode?.images?.webp?.large_image_url ||
-  episode?.images?.webp?.image_url ||
-  entry?.images?.jpg?.large_image_url ||
-  entry?.images?.jpg?.image_url ||
-  entry?.images?.webp?.large_image_url ||
-  entry?.images?.webp?.image_url ||
-  null;
-
-const buildEnglishTitleMap = async (entries = []) => {
-  const validEntries = Array.isArray(entries)
-    ? entries.filter((entry) => entry?.mal_id && Number.isFinite(entry.mal_id))
-    : [];
-
-  if (!validEntries.length) {
-    return new Map();
-  }
-
-  const results = await Promise.all(
-    validEntries.map(async (entry) => {
-      try {
-        const details = await fetchJsonWithRetry(`${JIKAN_API_URL}/anime/${entry.mal_id}`);
-        const englishTitle = resolvePreferredTitle(details?.data, resolvePreferredTitle(entry));
-        return [entry.mal_id, englishTitle];
-      } catch (error) {
-        console.warn(`Failed to fetch english title for mal_id ${entry.mal_id}`, error);
-        return [entry.mal_id, resolvePreferredTitle(entry)];
-      }
-    })
-  );
-
-  return new Map(results);
-};
-
-const normalizeLatestEpisodes = (payload = [], titleLookup = new Map()) =>
-  payload
-    .map((item) => {
-      if (!item) {
-        return null;
-      }
-
-      const entry = item.entry ?? {};
-      const latestEpisode =
-        Array.isArray(item.episodes) && item.episodes.length ? item.episodes[0] : null;
-
-      const coverImage = resolveEpisodeImage(entry, latestEpisode);
-
-      const rawEpisodeNumber = latestEpisode?.episode;
-      const episodeNumber =
-        typeof rawEpisodeNumber === "number" && Number.isFinite(rawEpisodeNumber)
-          ? rawEpisodeNumber
-          : Number.isFinite(latestEpisode?.mal_id)
-            ? latestEpisode.mal_id
-            : null;
-
-      const normalizeTotal = (value) => {
-        if (typeof value === "number" && Number.isFinite(value) && value > 0) {
-          return value;
-        }
-        if (typeof value === "string" && value.trim()) {
-          const numeric = Number(value.trim().replace(/[^0-9.]+/g, ""));
-          if (Number.isFinite(numeric) && numeric > 0) {
-            return numeric;
-          }
-        }
-        return null;
-      };
-
-      const totalEpisodesValue = normalizeTotal(entry?.episodes);
-      const airedEpisodesValue = normalizeTotal(entry?.episodes_aired);
-      const totalEpisodesRaw = totalEpisodesValue ?? airedEpisodesValue ?? null;
-
-      const id =
-        entry?.mal_id ??
-        latestEpisode?.mal_id ??
-        `${entry?.title ?? "episode"}-${episodeNumber ?? Math.random().toString(36).slice(2)}`;
-
-      const fallbackTitle =
-        typeof latestEpisode?.title === "string" ? latestEpisode.title.trim() : undefined;
-      const displayTitle =
-        (entry?.mal_id && titleLookup.get(entry.mal_id)) ??
-        resolvePreferredTitle(
-          entry,
-          resolvePreferredTitle(latestEpisode, fallbackTitle || "Untitled")
-        );
-
-      return {
-        id,
-        title: displayTitle,
-        episodeNumber,
-        totalEpisodes: totalEpisodesRaw,
-        coverImage,
-      };
-    })
-    .filter((item) => item && item.title);
-
 const Home = () => {
-const router = useRouter();
-const tabBarHeight = useBottomTabBarHeight();
-const bottomInset = tabBarHeight + 32;
+  const router = useRouter();
+  const tabBarHeight = useBottomTabBarHeight();
+  const bottomInset = tabBarHeight + 32;
 
   const [latestEpisodes, setLatestEpisodes] = useState([]);
   const [episodesLoading, setEpisodesLoading] = useState(true);
@@ -128,20 +28,16 @@ const bottomInset = tabBarHeight + 32;
         setEpisodesLoading(true);
         setEpisodesError(null);
 
-        const response = await fetchJsonWithRetry(`${JIKAN_API_URL}/watch/episodes`, {
+        const episodes = await fetchLatestStreamingEpisodes({
+          limit: 20,
           signal: controller.signal,
-          retries: 3,
-          backoff: 800,
         });
 
         if (!isMounted) {
           return;
         }
 
-        const rawData = response?.data ?? [];
-        const englishMap = await buildEnglishTitleMap(rawData.map((item) => item?.entry).filter(Boolean));
-        const normalized = normalizeLatestEpisodes(rawData, englishMap).slice(0, 6);
-        setLatestEpisodes(normalized);
+        setLatestEpisodes(episodes);
       } catch (error) {
         if (!isMounted || error?.name === "AbortError") {
           return;
@@ -165,7 +61,7 @@ const bottomInset = tabBarHeight + 32;
   }, []);
 
   const handleViewAll = () => {
-    router.push("/(tabs)/library");
+    router.push("/latest-episodes");
   };
 
   return (
@@ -196,7 +92,7 @@ const bottomInset = tabBarHeight + 32;
         </View>
 
         {episodesLoading ? (
-          <Text style={styles.emptyStateText}>Loading latest streaming episodes…</Text>
+          <Text style={styles.emptyStateText}>Loading latest streaming episodes...</Text>
         ) : episodesError ? (
           <Text style={styles.emptyStateText}>{episodesError}</Text>
         ) : latestEpisodes.length ? (

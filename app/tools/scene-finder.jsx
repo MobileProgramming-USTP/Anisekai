@@ -16,7 +16,9 @@ import {
   View,
 } from "react-native";
 
-const TRACE_API_URL = "https://api.trace.moe/search";
+const TRACE_API_URL =
+  (typeof process !== "undefined" && process.env?.EXPO_PUBLIC_TRACE_API_URL?.trim()) ||
+  "https://api.trace.moe/search";
 
 const SceneFinderScreen = () => {
   const [selectedImage, setSelectedImage] = useState(null);

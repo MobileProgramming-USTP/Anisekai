@@ -1,0 +1,184 @@
+import { JIKAN_API_URL } from "../explore/constants";
+import { fetchJsonWithRetry } from "../explore/utils/api";
+import { resolvePreferredTitle } from "../utils/resolveTitle";
+
+const FALLBACK_LIMIT = 20;
+const JIKAN_WATCH_EPISODES_MAX_LIMIT = 25;
+
+const resolveEpisodeImage = (entry, episode) =>
+  episode?.images?.jpg?.large_image_url ||
+  episode?.images?.jpg?.image_url ||
+  episode?.images?.webp?.large_image_url ||
+  episode?.images?.webp?.image_url ||
+  entry?.images?.jpg?.large_image_url ||
+  entry?.images?.jpg?.image_url ||
+  entry?.images?.webp?.large_image_url ||
+  entry?.images?.webp?.image_url ||
+  null;
+
+const parseEpisodeTimestamp = (episode) => {
+  if (!episode) {
+    return null;
+  }
+
+  const candidates = [episode.aired, episode.released, episode.premium_since];
+
+  for (const value of candidates) {
+    if (typeof value === "string" && value.trim().length > 0) {
+      const parsed = Date.parse(value);
+      if (Number.isFinite(parsed)) {
+        return parsed;
+      }
+    }
+  }
+
+  if (typeof episode.aired === "number" && Number.isFinite(episode.aired)) {
+    return episode.aired;
+  }
+
+  return null;
+};
+
+const findMostRecentEpisode = (episodes = []) => {
+  if (!Array.isArray(episodes) || episodes.length === 0) {
+    return null;
+  }
+
+  return episodes
+    .slice()
+    .sort((a, b) => (parseEpisodeTimestamp(b) ?? 0) - (parseEpisodeTimestamp(a) ?? 0))
+    .at(0);
+};
+
+const buildEnglishTitleMap = async (entries = []) => {
+  const validEntries = Array.isArray(entries)
+    ? entries.filter((entry) => entry?.mal_id && Number.isFinite(entry.mal_id))
+    : [];
+
+  if (!validEntries.length) {
+    return new Map();
+  }
+
+  const results = await Promise.all(
+    validEntries.map(async (entry) => {
+      try {
+        const details = await fetchJsonWithRetry(`${JIKAN_API_URL}/anime/${entry.mal_id}`);
+        const englishTitle = resolvePreferredTitle(details?.data, resolvePreferredTitle(entry));
+        return [entry.mal_id, englishTitle];
+      } catch (error) {
+        console.warn(`Failed to fetch english title for mal_id ${entry.mal_id}`, error);
+        return [entry.mal_id, resolvePreferredTitle(entry)];
+      }
+    })
+  );
+
+  return new Map(results);
+};
+
+const normalizeTotal = (value) => {
+  if (typeof value === "number" && Number.isFinite(value) && value > 0) {
+    return value;
+  }
+
+  if (typeof value === "string" && value.trim()) {
+    const numeric = Number(value.trim().replace(/[^0-9.]+/g, ""));
+    if (Number.isFinite(numeric) && numeric > 0) {
+      return numeric;
+    }
+  }
+
+  return null;
+};
+
+const normalizeLatestEpisodes = (payload = [], titleLookup = new Map()) =>
+  payload
+    .map((item) => {
+      if (!item) {
+        return null;
+      }
+
+      const entry = item.entry ?? {};
+      const latestEpisode = findMostRecentEpisode(item.episodes);
+      const coverImage = resolveEpisodeImage(entry, latestEpisode);
+
+      const rawEpisodeNumber = latestEpisode?.episode;
+      const episodeNumber =
+        typeof rawEpisodeNumber === "number" && Number.isFinite(rawEpisodeNumber)
+          ? rawEpisodeNumber
+          : Number.isFinite(latestEpisode?.mal_id)
+            ? latestEpisode.mal_id
+            : null;
+
+      const totalEpisodesValue = normalizeTotal(entry?.episodes);
+      const airedEpisodesValue = normalizeTotal(entry?.episodes_aired);
+      const totalEpisodesRaw = totalEpisodesValue ?? airedEpisodesValue ?? null;
+
+      const releaseTimestamp = parseEpisodeTimestamp(latestEpisode);
+      const releaseDateIso =
+        typeof latestEpisode?.aired === "string" && latestEpisode.aired.trim()
+          ? latestEpisode.aired
+          : typeof latestEpisode?.released === "string" && latestEpisode.released.trim()
+            ? latestEpisode.released
+            : releaseTimestamp
+              ? new Date(releaseTimestamp).toISOString()
+              : null;
+
+      const id =
+        entry?.mal_id ??
+        latestEpisode?.mal_id ??
+        `${entry?.title ?? "episode"}-${episodeNumber ?? Math.random().toString(36).slice(2)}`;
+
+      const fallbackTitle =
+        typeof latestEpisode?.title === "string" ? latestEpisode.title.trim() : undefined;
+      const displayTitle =
+        (entry?.mal_id && titleLookup.get(entry.mal_id)) ??
+        resolvePreferredTitle(
+          entry,
+          resolvePreferredTitle(latestEpisode, fallbackTitle || "Untitled")
+        );
+
+      if (!displayTitle) {
+        return null;
+      }
+
+      return {
+        id,
+        title: displayTitle,
+        episodeNumber,
+        totalEpisodes: totalEpisodesRaw,
+        coverImage,
+        releaseDate: releaseDateIso,
+        releasedAt: releaseTimestamp,
+        streamingUrl: typeof latestEpisode?.url === "string" ? latestEpisode.url : null,
+        entryMalId: entry?.mal_id ?? null,
+        episodeTitle: fallbackTitle ?? null,
+      };
+    })
+    .filter(Boolean);
+
+export const fetchLatestStreamingEpisodes = async ({
+  limit = FALLBACK_LIMIT,
+  signal,
+} = {}) => {
+  const normalizedLimit = Math.max(1, Math.min(limit || FALLBACK_LIMIT, JIKAN_WATCH_EPISODES_MAX_LIMIT));
+
+  const endpoint = `${JIKAN_API_URL}/watch/episodes?limit=${encodeURIComponent(String(normalizedLimit))}`;
+
+  const response = await fetchJsonWithRetry(endpoint, {
+    signal,
+    retries: 3,
+    backoff: 800,
+  });
+
+  const rawData = Array.isArray(response?.data) ? response.data : [];
+  const trimmedData = rawData.slice(0, normalizedLimit);
+
+  const englishMap = await buildEnglishTitleMap(trimmedData.map((item) => item?.entry).filter(Boolean));
+  const normalizedEpisodes = normalizeLatestEpisodes(trimmedData, englishMap);
+
+  return normalizedEpisodes
+    .sort((a, b) => (b.releasedAt ?? 0) - (a.releasedAt ?? 0))
+    .slice(0, normalizedLimit);
+};
+
+export default fetchLatestStreamingEpisodes;

@@ -6,7 +6,9 @@ import { Stack } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Dimensions, FlatList, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-const API_BASE_URL = 'https://api.waifu.pics/sfw';
+const API_BASE_URL =
+  (typeof process !== 'undefined' && process.env?.EXPO_PUBLIC_WAIFU_API_BASE?.trim()) ||
+  'https://api.waifu.pics/sfw';
 const CATEGORIES = ['waifu', 'neko', 'shinobu', 'megumin', 'bully', 'cuddle', 'cry', 'kiss', 'lick', 'pat'];
 
 export default function WaifuGeneratorScreen() {
