@@ -246,11 +246,13 @@ const exploreStyles = StyleSheet.create({
   },
   genreChipsContainer: {
     paddingHorizontal: 20,
-    marginBottom: 16,
+    paddingVertical: 6,
+    marginBottom: 24,
   },
   genreChipsContent: {
     alignItems: 'center',
-    paddingVertical: 4,
+    paddingVertical: 6,
+    paddingRight: 16,
   },
   genreChip: {
     paddingHorizontal: 14,
@@ -259,7 +261,7 @@ const exploreStyles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#263445',
     backgroundColor: '#152029',
-    marginRight: 10,
+    marginRight: 12,
   },
   genreChipActive: {
     borderColor: '#fcbf49',
@@ -377,7 +379,7 @@ const exploreStyles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   genreEmptyText: {
-    marginTop: 12,
+    marginTop: 20,
   },
   searchLoader: {
     marginTop: 12,

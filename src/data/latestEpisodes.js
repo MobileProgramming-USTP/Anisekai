@@ -50,7 +50,22 @@ const findMostRecentEpisode = (episodes = []) => {
     .at(0);
 };
 
-const buildEnglishTitleMap = async (entries = []) => {
+const normalizeGenres = (genres) =>
+  Array.isArray(genres)
+    ? genres
+        .map((genre) => {
+          if (typeof genre === "string") {
+            return genre.trim();
+          }
+          if (typeof genre?.name === "string") {
+            return genre.name.trim();
+          }
+          return "";
+        })
+        .filter(Boolean)
+    : [];
+
+const buildEntryMetadataMap = async (entries = []) => {
   const validEntries = Array.isArray(entries)
     ? entries.filter((entry) => entry?.mal_id && Number.isFinite(entry.mal_id))
     : [];
@@ -61,13 +76,31 @@ const buildEnglishTitleMap = async (entries = []) => {
 
   const results = await Promise.all(
     validEntries.map(async (entry) => {
+      const fallbackTitle = resolvePreferredTitle(entry);
+      const fallbackGenres = normalizeGenres(entry?.genres);
+
       try {
         const details = await fetchJsonWithRetry(`${JIKAN_API_URL}/anime/${entry.mal_id}`);
-        const englishTitle = resolvePreferredTitle(details?.data, resolvePreferredTitle(entry));
-        return [entry.mal_id, englishTitle];
+        const data = details?.data;
+        const displayTitle = resolvePreferredTitle(data, fallbackTitle);
+        const genres = normalizeGenres(data?.genres);
+
+        return [
+          entry.mal_id,
+          {
+            title: displayTitle,
+            genres: genres.length ? genres : fallbackGenres,
+          },
+        ];
       } catch (error) {
-        console.warn(`Failed to fetch english title for mal_id ${entry.mal_id}`, error);
-        return [entry.mal_id, resolvePreferredTitle(entry)];
+        console.warn(`Failed to fetch metadata for mal_id ${entry.mal_id}`, error);
+        return [
+          entry.mal_id,
+          {
+            title: fallbackTitle,
+            genres: fallbackGenres,
+          },
+        ];
       }
     })
   );
@@ -90,7 +123,7 @@ const normalizeTotal = (value) => {
   return null;
 };
 
-const normalizeLatestEpisodes = (payload = [], titleLookup = new Map()) =>
+const normalizeLatestEpisodes = (payload = [], metadataLookup = new Map()) =>
   payload
     .map((item) => {
       if (!item) {
@@ -130,12 +163,18 @@ const normalizeLatestEpisodes = (payload = [], titleLookup = new Map()) =>
 
       const fallbackTitle =
         typeof latestEpisode?.title === "string" ? latestEpisode.title.trim() : undefined;
+      const metadata = entry?.mal_id ? metadataLookup.get(entry.mal_id) : undefined;
       const displayTitle =
-        (entry?.mal_id && titleLookup.get(entry.mal_id)) ??
+        (typeof metadata?.title === "string" && metadata.title.trim()) ??
         resolvePreferredTitle(
           entry,
           resolvePreferredTitle(latestEpisode, fallbackTitle || "Untitled")
         );
+
+      const genres =
+        (Array.isArray(metadata?.genres) && metadata.genres.length
+          ? metadata.genres
+          : normalizeGenres(entry?.genres)) ?? [];
 
       if (!displayTitle) {
         return null;
@@ -152,6 +191,7 @@ const normalizeLatestEpisodes = (payload = [], titleLookup = new Map()) =>
         streamingUrl: typeof latestEpisode?.url === "string" ? latestEpisode.url : null,
         entryMalId: entry?.mal_id ?? null,
         episodeTitle: fallbackTitle ?? null,
+        genres,
       };
     })
     .filter(Boolean);
@@ -173,8 +213,8 @@ export const fetchLatestStreamingEpisodes = async ({
   const rawData = Array.isArray(response?.data) ? response.data : [];
   const trimmedData = rawData.slice(0, normalizedLimit);
 
-  const englishMap = await buildEnglishTitleMap(trimmedData.map((item) => item?.entry).filter(Boolean));
-  const normalizedEpisodes = normalizeLatestEpisodes(trimmedData, englishMap);
+  const metadataLookup = await buildEntryMetadataMap(trimmedData.map((item) => item?.entry).filter(Boolean));
+  const normalizedEpisodes = normalizeLatestEpisodes(trimmedData, metadataLookup);
 
   return normalizedEpisodes
     .sort((a, b) => (b.releasedAt ?? 0) - (a.releasedAt ?? 0))

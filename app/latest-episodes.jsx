@@ -124,6 +124,11 @@ const LatestEpisodesScreen = () => {
       typeof item.episodeNumber === "number" && Number.isFinite(item.episodeNumber);
 
     const fallbackInitial = item.title?.charAt?.(0)?.toUpperCase?.() || "?";
+    const genreLabel =
+      Array.isArray(item.genres) && item.genres.length
+        ? item.genres.slice(0, 3).join(" • ")
+        : null;
+    const subtitleText = genreLabel || item.episodeTitle || null;
 
     return (
       <Pressable
@@ -144,9 +149,9 @@ const LatestEpisodesScreen = () => {
           <Text style={styles.episodeTitle} numberOfLines={2}>
             {item.title}
           </Text>
-          {item.episodeTitle ? (
+          {subtitleText ? (
             <Text style={styles.episodeSubtitle} numberOfLines={1}>
-              {item.episodeTitle}
+              {subtitleText}
             </Text>
           ) : null}
           <View style={styles.episodeMetaRow}>

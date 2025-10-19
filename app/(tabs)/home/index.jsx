@@ -35,6 +35,18 @@ const AI_PROMPT_SUGGESTIONS = [
     label: "Romance",
     prompt: "Romance anime or manga full of chemistry, slow-burn tension, and emotional payoffs.",
   },
+  {
+    label: "Isekai",
+    prompt: "Portal fantasy journeys with game-like progression, inventive worlds, and clever protagonists.",
+  },
+  {
+    label: "Seinen",
+    prompt: "Grounded seinen tales that balance mature themes, psychological intrigue, and layered characters.",
+  },
+  {
+    label: "Sports",
+    prompt: "Competitive sports series loaded with training arcs, rivalries, and last-second comebacks.",
+  },
 ];
 
 const Home = () => {
