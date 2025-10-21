@@ -1,7 +1,6 @@
-const DEFAULT_JIKAN_API_URL = 'https://api.jikan.moe/v4';
-export const JIKAN_API_URL =
-  (typeof process !== 'undefined' && process.env?.EXPO_PUBLIC_JIKAN_API_URL?.trim()) ||
-  DEFAULT_JIKAN_API_URL;
+import { API_ENDPOINTS } from '../config/api';
+
+export const JIKAN_API_URL = API_ENDPOINTS.jikan || 'https://api.jikan.moe/v4';
 
 export const SCOPE_VALUES = {
   ANIME: 'anime',

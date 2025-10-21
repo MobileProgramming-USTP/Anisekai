@@ -1,11 +1,12 @@
+import { env } from "../config/env";
+
 const GEMINI_MODEL = "gemini-2.5-flash";
 const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 const DEFAULT_RECOMMENDATION_COUNT = 5;
 const MIN_RECOMMENDATIONS = 3;
 const MAX_RECOMMENDATIONS = 8;
 
-const GEMINI_API_KEY =
-  (typeof process !== "undefined" && process.env?.EXPO_PUBLIC_GEMINI_API_KEY?.trim()) || "";
+const GEMINI_API_KEY = env.geminiApiKey || "";
 
 export const isGeminiConfigured = GEMINI_API_KEY.length > 0;
 

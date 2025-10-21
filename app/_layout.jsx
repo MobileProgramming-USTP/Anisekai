@@ -2,19 +2,18 @@ import { useMemo } from "react";
 import { Stack } from "expo-router";
 import { ConvexProvider, ConvexReactClient } from "convex/react";
 import Constants from "expo-constants";
+
+import { env } from "../src/config/env";
 import { AuthProvider } from "./context/AuthContext";
 
 const resolveConvexUrl = () => {
-  const envUrl = process.env.EXPO_PUBLIC_CONVEX_URL?.trim();
-  if (envUrl) {
-    return envUrl;
+  if (env.convexUrl) {
+    return env.convexUrl;
   }
 
   const extras = Constants?.expoConfig?.extra ?? {};
   const requestedEnvRaw =
-    process.env.EXPO_PUBLIC_CONVEX_ENV ||
-    extras.convexDefaultEnv ||
-    (__DEV__ ? "development" : "production");
+    env.convexEnv || extras.convexDefaultEnv || (__DEV__ ? "development" : "production");
 
   const requestedEnv = requestedEnvRaw.toLowerCase();
 

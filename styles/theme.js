@@ -1,25 +1,55 @@
-﻿export const theme = {
+export const palette = {
+  primary: "#fcbf49",
+  primaryForeground: "#121212",
+  secondary: "#5b5ff7",
+  background: "#0b0b0f",
+  backgroundAlt: "#0F1719",
+  surface: "rgba(0,0,0,0.6)",
+  surfaceElevated: "#1F1F1F",
+  surfaceMuted: "#1E2A3A",
+  text: "#ffffff",
+  textSecondary: "#A5B2C2",
+  textMuted: "#6f7a89",
+  border: "#333333",
+  borderMuted: "rgba(231, 237, 245, 0.08)",
+  success: "#4ADE80",
+  warning: "#fcbf49",
+  danger: "#e63946",
+  accent: "#ff0080",
+};
+
+export const theme = {
   colors: {
-    primary: "#fcbf49",
-    secondary: "#5b5ff7",
-    background: "#0b0b0f",
-    surface: "rgba(0,0,0,0.6)",
-    text: "#ffffff",
-    textMuted: "#ccccd2",
-    textSubtle: "#999999",
-    border: "#333333",
-    danger: "#e63946",
-    accent: "#ff0080",
+    primary: palette.primary,
+    primaryForeground: palette.primaryForeground,
+    secondary: palette.secondary,
+    background: palette.background,
+    backgroundAlt: palette.backgroundAlt,
+    surface: palette.surface,
+    surfaceElevated: palette.surfaceElevated,
+    surfaceMuted: palette.surfaceMuted,
+    text: palette.text,
+    textSubtle: palette.textSecondary,
+    textMuted: palette.textMuted,
+    border: palette.border,
+    borderMuted: palette.borderMuted,
+    success: palette.success,
+    warning: palette.warning,
+    danger: palette.danger,
+    accent: palette.accent,
   },
   spacing: {
+    xxsmall: 2,
     xsmall: 4,
     small: 8,
     medium: 16,
     large: 24,
     xlarge: 32,
+    xxlarge: 48,
   },
   typography: {
     sizes: {
+      xs: 12,
       small: 14,
       medium: 16,
       large: 20,
@@ -30,6 +60,7 @@
     weights: {
       regular: "400",
       medium: "500",
+      semibold: "600",
       bold: "700",
       black: "900",
     },
@@ -39,6 +70,7 @@
     },
   },
   radius: {
+    nano: 4,
     small: 8,
     medium: 16,
     large: 24,
@@ -51,10 +83,14 @@
     opacity: 0.25,
     radius: 10,
     elevation: 8,
+    subtle: {
+      color: "#000000",
+      offset: { width: 0, height: 2 },
+      opacity: 0.18,
+      radius: 6,
+      elevation: 4,
+    },
   },
 };
 
 export default theme;
-
-
-

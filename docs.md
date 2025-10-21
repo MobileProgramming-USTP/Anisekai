@@ -3,7 +3,7 @@
 ## Overview
 - **Platform**: React Native app built with Expo and Expo Router.
 - **Purpose**: Provides an anime-focused experience featuring authentication, tabbed navigation, and hooks for Convex backend data.
-- **Tech Stack**: Expo Router for navigation, Convex for backend mutations/queries, React Context for auth, centralized theming via `app/styles`.
+- **Tech Stack**: Expo Router for navigation, Convex for backend mutations/queries, React Context for auth, centralized theming via `styles`.
 
 ## Quick Start
 1. Install dependencies: `npm install` or `yarn install`.
@@ -24,31 +24,46 @@
 ## Project Structure
 ```
 app/
-  _layout.jsx            # Root layout: Auth + Convex providers wrapped around Stack
-  index.jsx              # Landing screen directing users to login
+  _layout.jsx                # Root layout: Auth + Convex providers wrapped around Stack
+  index.jsx                  # Landing screen directing users to login
+  latest-episodes.jsx        # Latest streaming episodes modal screen
+  tools/
+    scene-finder.jsx         # Trace.moe lookup experience
+    waifu-generator.jsx      # Waifu.pics generator with media library support
   context/
-    AuthContext.jsx      # Auth provider storing current user state
+    AuthContext.jsx          # Auth provider storing current user state
   login/
-    login.jsx            # Login form using Convex mutation + WelcomeBanner
-    register.jsx         # Registration form
-    forgot-password.jsx  # Email capture screen
-  (tabs)/                # Protected tab navigator (Expo Router group)
-    _layout.jsx          # Tab bar configuration
-    home.jsx             # Home feed (uses themed styles)
-    explore.jsx          # Placeholder screen(s)
-    library.jsx          # Placeholder
-    profile.jsx          # User info & logout
+    login.jsx                # Login form using Convex mutation + WelcomeBanner
+    register.jsx             # Registration form
+    forgot-password.jsx      # Email capture screen
+  (tabs)/                    # Protected tab navigator (Expo Router group)
+    _layout.jsx              # Tab bar configuration
+    home.jsx                 # Home feed
+    explore/index.jsx        # Explore search + detail surface
+    library/index.jsx        # Library lists
+    miscellaneous/index.jsx  # Miscellaneous utilities
+    profile/index.jsx        # User info & logout
 components/
-  WelcomeBanner.jsx      # Animated banner shown after successful login
+  WelcomeBanner.jsx          # Animated banner shown after successful login
 convex/
-  schema.ts              # Convex data model (users table)
+  schema.ts                  # Convex data model (users table)
   functions/
-    auth.js              # register/login mutations
-    message.js           # Sample message queries/mutations
-app/styles/
-  theme.js               # Named + default export with design tokens
-  styles.js              # Global reusable styles
-  *Styles.js             # Screen-specific StyleSheets consuming the theme
+    auth.js                  # register/login mutations
+    message.js               # Sample message queries/mutations
+src/
+  config/
+    api.js                   # Centralized API endpoints derived from env
+    env.js                   # Environment variable reader with fallbacks
+  data/                      # Data-fetching helpers
+  explore/                   # Explore feature helpers, hooks, components
+styles/
+  theme.js                   # Named + default export with design tokens
+  styles.js                  # Global reusable styles
+  latestEpisodesStyles.js    # Latest episodes screen theme-aware styles
+  tools/
+    sceneFinderStyles.js     # Scene Finder styling bundle
+    waifuGeneratorStyles.js  # Waifu Generator styling bundle
+  *Styles.js                 # Existing screen-specific StyleSheets
 ```
 
 ## Navigation & Flow
@@ -76,9 +91,10 @@ app/styles/
 - `WelcomeBanner.jsx` animates in/out using `Animated.sequence`. It defers `onFinish` execution with `requestAnimationFrame` to avoid React `useInsertionEffect` warnings.
 
 ## Styling System
-- `app/styles/theme.js` centralizes tokens (colors, spacing, typography, radius, shadow) and exports them as both named (`theme`) and default exports.
-- `app/styles/styles.js` defines `globalStyles` built from the theme (container, title, button, card, etc.).
-- Screen-specific StyleSheets (`indexStyles`, `loginStyles`, `registerStyles`, `forgotPasswordStyles`, `homeStyles`, `profileStyles`) consume the theme for consistent colors/spacing.
+- `styles/theme.js` centralizes tokens (colors, spacing, typography, radius, shadow) and exports them as both named (`theme`) and default exports.
+- `styles/styles.js` defines `globalStyles` built from the theme (screen wrappers, buttons, chips, etc.).
+- Dedicated style bundles (`styles/latestEpisodesStyles.js`, `styles/tools/*`) keep feature screens lean while still consuming the shared theme.
+- Legacy screen StyleSheets (`indexStyles`, `loginStyles`, `registerStyles`, `forgotPasswordStyles`, `homeStyles`, `profileStyles`) continue to rely on the same tokens and can be incrementally migrated.
 - Components import styles either as default exports (e.g., `indexStyles`) or via `globalStyles` for shared patterns.
 
 ## Backend Integration (Convex)
@@ -92,6 +108,7 @@ app/styles/
 
 ## Environment Configuration
 - `.env.local` can hold `EXPO_PUBLIC_CONVEX_URL` (Expo automatically exposes `EXPO_PUBLIC_` vars).
+- `src/config/env.js` reads and normalizes environment variables, while `src/config/api.js` exposes ready-to-use endpoints with sensible fallbacks.
 - `app.json` may define `expo.extra.convexDevUrl` / `convexProdUrl` to auto-resolve backend endpoints.
 - When neither is present, the app throws an error at startup, making misconfiguration obvious.
 

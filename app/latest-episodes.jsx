@@ -1,21 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
-import {
-  ActivityIndicator,
-  FlatList,
-  Image,
-  Linking,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { ActivityIndicator, FlatList, Image, Linking, Pressable, Text, View } from "react-native";
 import { Stack, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import fetchLatestStreamingEpisodes from "../src/data/latestEpisodes";
+import { latestEpisodesStyles } from "../styles/latestEpisodesStyles";
+import { theme } from "../styles/theme";
 
 const EPISODE_LIMIT = 20;
+const styles = latestEpisodesStyles;
 
 const formatReleaseDate = (isoDate) => {
   if (!isoDate || typeof isoDate !== "string") {
@@ -33,6 +27,13 @@ const formatReleaseDate = (isoDate) => {
     day: "numeric",
     year: "numeric",
   });
+};
+
+const formatGenres = (genres) => {
+  if (!Array.isArray(genres) || genres.length === 0) {
+    return null;
+  }
+  return genres.slice(0, 3).join(" • ");
 };
 
 const LatestEpisodesScreen = () => {
@@ -76,7 +77,7 @@ const LatestEpisodesScreen = () => {
     if (isLoading) {
       return (
         <View style={styles.centerContent}>
-          <ActivityIndicator size="large" color="#fcbf49" />
+          <ActivityIndicator size="large" color={theme.colors.primary} />
           <Text style={styles.statusText}>Loading latest streaming episodes...</Text>
         </View>
       );
@@ -124,10 +125,7 @@ const LatestEpisodesScreen = () => {
       typeof item.episodeNumber === "number" && Number.isFinite(item.episodeNumber);
 
     const fallbackInitial = item.title?.charAt?.(0)?.toUpperCase?.() || "?";
-    const genreLabel =
-      Array.isArray(item.genres) && item.genres.length
-        ? item.genres.slice(0, 3).join(" • ")
-        : null;
+    const genreLabel = formatGenres(item.genres);
     const subtitleText = genreLabel || item.episodeTitle || null;
 
     return (
@@ -140,11 +138,12 @@ const LatestEpisodesScreen = () => {
           {item.coverImage ? (
             <Image source={{ uri: item.coverImage }} style={styles.episodeImage} />
           ) : (
-            <View style={[styles.episodeImage, styles.episodeImageFallback]}>
+            <View style={styles.episodeImageFallback}>
               <Text style={styles.episodeFallbackText}>{fallbackInitial}</Text>
             </View>
           )}
         </View>
+
         <View style={styles.episodeContent}>
           <Text style={styles.episodeTitle} numberOfLines={2}>
             {item.title}
@@ -170,23 +169,22 @@ const LatestEpisodesScreen = () => {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top + 16 }]}>
+    <View style={[styles.screen, { paddingTop: insets.top + theme.spacing.medium }]}>
       <Stack.Screen
         options={{
           title: "Latest Episodes",
-          headerStyle: { backgroundColor: "#121212" },
-          headerTintColor: "#fff",
+          headerStyle: { backgroundColor: theme.colors.backgroundAlt },
+          headerTintColor: theme.colors.text,
         }}
       />
 
       <Pressable
-        style={[styles.closeButton, { top: insets.top + 16 }]}
+        style={[styles.closeButton, { top: insets.top + theme.spacing.medium }]}
         onPress={() => router.back()}
         hitSlop={12}
         accessibilityRole="button"
-        accessibilityLabel="Close latest episodes"
       >
-        <Ionicons name="close" size={22} color="#E7EDF5" />
+        <Ionicons name="close" size={22} color={theme.colors.text} />
       </Pressable>
 
       {renderedContent ? (
@@ -205,111 +203,3 @@ const LatestEpisodesScreen = () => {
 };
 
 export default LatestEpisodesScreen;
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#0F1719",
-    paddingHorizontal: 20,
-    paddingBottom: 16,
-  },
-  closeButton: {
-    position: "absolute",
-    left: 16,
-    zIndex: 10,
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(15, 23, 25, 0.85)",
-    borderWidth: 1,
-    borderColor: "rgba(231, 237, 245, 0.08)",
-  },
-  centerContent: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  statusText: {
-    marginTop: 16,
-    color: "#A5B2C2",
-    fontSize: 16,
-    textAlign: "center",
-  },
-  listContent: {
-    paddingTop: 76,
-    paddingBottom: 24,
-  },
-  episodeRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    backgroundColor: "#1E2A3A",
-    borderRadius: 16,
-  },
-  episodeImage: {
-    width: 90,
-    height: 130,
-    borderRadius: 12,
-    backgroundColor: "#121A21",
-  },
-  episodeImageWrapper: {
-    marginRight: 16,
-    borderRadius: 12,
-    overflow: "hidden",
-    backgroundColor: "#121A21",
-  },
-  episodeImageFallback: {
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  episodeFallbackText: {
-    color: "#fcbf49",
-    fontSize: 32,
-    fontWeight: "700",
-  },
-  episodeContent: {
-    flex: 1,
-  },
-  episodeTitle: {
-    color: "#E7EDF5",
-    fontSize: 17,
-    fontWeight: "700",
-  },
-  episodeSubtitle: {
-    color: "#A5B2C2",
-    fontSize: 14,
-    marginTop: 4,
-  },
-  episodeMetaRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    flexWrap: "wrap",
-    marginTop: 10,
-  },
-  metaBadge: {
-    backgroundColor: "rgba(252,191,73,0.18)",
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    marginRight: 12,
-    marginBottom: 6,
-  },
-  metaBadgeText: {
-    color: "#fcbf49",
-    fontWeight: "700",
-    fontSize: 13,
-    letterSpacing: 0.4,
-  },
-  metaText: {
-    color: "#A5B2C2",
-    fontSize: 13,
-    marginRight: 12,
-    marginBottom: 6,
-  },
-  separator: {
-    height: 14,
-  },
-});
