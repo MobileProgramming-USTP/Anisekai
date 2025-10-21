@@ -4,6 +4,12 @@ import { resolvePreferredTitle } from "../utils/resolveTitle";
 
 const FALLBACK_LIMIT = 20;
 const JIKAN_WATCH_EPISODES_MAX_LIMIT = 25;
+const MAX_METADATA_REQUESTS_PER_RUN = 5;
+const RATE_LIMIT_COOLDOWN_MS = 60 * 1000;
+
+const metadataCache = new Map();
+let lastRateLimitTimestamp = 0;
+let hasLoggedRateLimit = false;
 
 const resolveEpisodeImage = (entry, episode) =>
   episode?.images?.jpg?.large_image_url ||
@@ -65,6 +71,41 @@ const normalizeGenres = (genres) =>
         .filter(Boolean)
     : [];
 
+const createFallbackMetadata = (entry) => ({
+  title: resolvePreferredTitle(entry) || null,
+  genres: normalizeGenres(entry?.genres),
+});
+
+const isRateLimitError = (error) => {
+  if (typeof error?.status === "number") {
+    return error.status === 429;
+  }
+
+  if (typeof error?.response?.status === "number") {
+    return error.response.status === 429;
+  }
+
+  return typeof error?.message === "string" && error.message.includes("429");
+};
+
+const shouldSkipNetworkRequests = () => Date.now() - lastRateLimitTimestamp < RATE_LIMIT_COOLDOWN_MS;
+
+const markRateLimit = () => {
+  lastRateLimitTimestamp = Date.now();
+  if (!hasLoggedRateLimit) {
+    console.warn(
+      "Jikan rate limit hit while fetching episode metadata. Falling back to basic entry information for now."
+    );
+    hasLoggedRateLimit = true;
+  }
+};
+
+const resetRateLimitWarningIfNeeded = () => {
+  if (!shouldSkipNetworkRequests()) {
+    hasLoggedRateLimit = false;
+  }
+};
+
 const buildEntryMetadataMap = async (entries = []) => {
   const validEntries = Array.isArray(entries)
     ? entries.filter((entry) => entry?.mal_id && Number.isFinite(entry.mal_id))
@@ -74,38 +115,64 @@ const buildEntryMetadataMap = async (entries = []) => {
     return new Map();
   }
 
-  const results = await Promise.all(
-    validEntries.map(async (entry) => {
-      const fallbackTitle = resolvePreferredTitle(entry);
-      const fallbackGenres = normalizeGenres(entry?.genres);
+  resetRateLimitWarningIfNeeded();
 
-      try {
-        const details = await fetchJsonWithRetry(`${JIKAN_API_URL}/anime/${entry.mal_id}`);
-        const data = details?.data;
-        const displayTitle = resolvePreferredTitle(data, fallbackTitle);
-        const genres = normalizeGenres(data?.genres);
-
-        return [
-          entry.mal_id,
-          {
-            title: displayTitle,
-            genres: genres.length ? genres : fallbackGenres,
-          },
-        ];
-      } catch (error) {
-        console.warn(`Failed to fetch metadata for mal_id ${entry.mal_id}`, error);
-        return [
-          entry.mal_id,
-          {
-            title: fallbackTitle,
-            genres: fallbackGenres,
-          },
-        ];
-      }
-    })
+  // Remove duplicate mal_id occurrences to avoid redundant requests.
+  const uniqueEntries = Array.from(
+    new Map(validEntries.map((entry) => [entry.mal_id, entry])).values()
   );
 
-  return new Map(results);
+  const result = new Map();
+  const entriesToFetch = [];
+  const skipNetwork = shouldSkipNetworkRequests();
+
+  for (const entry of uniqueEntries) {
+    const malId = entry.mal_id;
+    const cached = metadataCache.get(malId);
+
+    if (cached) {
+      result.set(malId, cached);
+      continue;
+    }
+
+    const fallback = createFallbackMetadata(entry);
+    result.set(malId, fallback);
+
+    if (!skipNetwork && entriesToFetch.length < MAX_METADATA_REQUESTS_PER_RUN) {
+      entriesToFetch.push({ entry, fallback });
+    }
+  }
+
+  for (const { entry, fallback } of entriesToFetch) {
+    const malId = entry.mal_id;
+
+    try {
+      const details = await fetchJsonWithRetry(`${JIKAN_API_URL}/anime/${malId}`);
+      const data = details?.data;
+      const displayTitle = resolvePreferredTitle(data, fallback.title);
+      const genres = normalizeGenres(data?.genres);
+
+      const metadata = {
+        title: displayTitle || fallback.title,
+        genres: genres.length ? genres : fallback.genres,
+      };
+
+      metadataCache.set(malId, metadata);
+      result.set(malId, metadata);
+    } catch (error) {
+      metadataCache.set(malId, fallback);
+      result.set(malId, fallback);
+
+      if (isRateLimitError(error)) {
+        markRateLimit();
+        break;
+      }
+
+      console.warn(`Failed to fetch metadata for mal_id ${malId}`, error);
+    }
+  }
+
+  return result;
 };
 
 const normalizeTotal = (value) => {

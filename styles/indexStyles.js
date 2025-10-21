@@ -40,7 +40,7 @@ const indexStyles = StyleSheet.create({
   },
   subtitle: {
     fontSize: theme.typography.sizes.medium,
-    color: theme.colors.textMuted,
+    color: theme.colors.text,
     textAlign: "center",
     marginBottom: theme.spacing.large + theme.spacing.small,
     marginTop: theme.spacing.medium,
