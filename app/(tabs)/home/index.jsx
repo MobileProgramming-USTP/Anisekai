@@ -1,3 +1,6 @@
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
+import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -9,15 +12,12 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
-import { useRouter } from "expo-router";
 
-import styles from "../../../styles/homeStyles";
-import fetchLatestStreamingEpisodes from "../../../src/data/latestEpisodes";
 import fetchAiAnimeMangaRecommendations, {
   isGeminiConfigured,
 } from "../../../src/data/geminiRecommendations";
+import fetchLatestStreamingEpisodes from "../../../src/data/latestEpisodes";
+import styles from "../../../styles/homeStyles";
 
 const HERO_LOGO = require("../../login/assets/anisekai.png");
 const HERO_BACKGROUND = require("../../../assets/images/anime-collage.png");
@@ -282,7 +282,7 @@ const Home = () => {
               style={[styles.aiPrimaryGradient, aiButtonDisabled && styles.aiPrimaryButtonDisabled]}
             >
               <Text style={styles.aiPrimaryText}>
-                {aiLoading ? "Summoning Gemini..." : "Ask Gemini"}
+                {aiLoading ? "Summoning Gemini..." : "Ask AnisekAI"}
               </Text>
             </LinearGradient>
           </TouchableOpacity>
