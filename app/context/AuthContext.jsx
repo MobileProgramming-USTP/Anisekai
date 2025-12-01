@@ -1,7 +1,5 @@
 import { createContext, useCallback, useContext, useMemo, useState } from "react";
-import { useMutation } from "convex/react";
-
-import { api } from "../../convex/_generated/api";
+import { localAuthApi } from "../../src/services/localDataStore";
 
 const normalizeFavorites = (favorites) => {
   if (!Array.isArray(favorites)) {
@@ -60,7 +58,7 @@ const AuthContext = createContext({
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const updateProfileMutation = useMutation(api["functions/auth"].updateProfile);
+  const userId = user?.id ?? null;
 
   const signIn = useCallback((nextUser) => {
     setUser(normalizeUser(nextUser));
@@ -72,11 +70,11 @@ export const AuthProvider = ({ children }) => {
 
   const updateProfile = useCallback(
     async (updates = {}) => {
-      if (!user?.id) {
+      if (!userId) {
         throw new Error("You must be signed in to update your profile.");
       }
 
-      const payload = { userId: user.id };
+      const payload = { userId };
 
       if (Object.prototype.hasOwnProperty.call(updates, "username")) {
         payload.username = updates.username;
@@ -88,37 +86,48 @@ export const AuthProvider = ({ children }) => {
         payload.avatar = updates.avatar;
       }
 
-      const result = await updateProfileMutation(payload);
+      const result = await localAuthApi.updateProfile(payload);
       const normalized = normalizeUser(result);
       setUser(normalized);
       return normalized;
     },
-    [updateProfileMutation, user?.id]
+    [userId]
   );
 
-  const syncFavorites = useCallback((favorites = []) => {
-    const normalizedFavorites = normalizeFavorites(favorites);
-    setUser((previous) => {
-      if (!previous) {
-        return previous;
+  const syncFavorites = useCallback(
+    (favorites = []) => {
+      const normalizedFavorites = normalizeFavorites(favorites);
+      setUser((previous) => {
+        if (!previous) {
+          return previous;
+        }
+
+        const currentFavorites = previous.favorites ?? [];
+        const isSameLength = currentFavorites.length === normalizedFavorites.length;
+        const isSame =
+          isSameLength &&
+          currentFavorites.every((value, index) => value === normalizedFavorites[index]);
+
+        if (isSame) {
+          return previous;
+        }
+
+        return {
+          ...previous,
+          favorites: normalizedFavorites,
+        };
+      });
+
+      if (userId) {
+        localAuthApi
+          .updateFavorites({ userId, favorites: normalizedFavorites })
+          .catch((error) => {
+            console.error("Failed to persist favorites", error);
+          });
       }
-
-      const currentFavorites = previous.favorites ?? [];
-      const isSameLength = currentFavorites.length === normalizedFavorites.length;
-      const isSame =
-        isSameLength &&
-        currentFavorites.every((value, index) => value === normalizedFavorites[index]);
-
-      if (isSame) {
-        return previous;
-      }
-
-      return {
-        ...previous,
-        favorites: normalizedFavorites,
-      };
-    });
-  }, []);
+    },
+    [userId]
+  );
 
   const value = useMemo(
     () => ({
