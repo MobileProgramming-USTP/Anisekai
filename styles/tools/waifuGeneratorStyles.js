@@ -12,7 +12,9 @@ export const waifuGeneratorStyles = StyleSheet.create({
   },
   scrollContent: {
     alignItems: "center",
-    padding: theme.spacing.large,
+    paddingHorizontal: theme.spacing.large,
+    paddingBottom: theme.spacing.large,
+    paddingTop: theme.spacing.xxlarge,
   },
   titleContainer: {
     alignItems: "center",
