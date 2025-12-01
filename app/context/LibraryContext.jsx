@@ -1,7 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { useMutation, useQuery } from 'convex/react';
-import { api } from '../../convex/_generated/api';
 import { useAuth } from './AuthContext';
+import { localLibraryApi } from '../../src/services/localDataStore';
 import { resolvePreferredTitle } from '../../src/utils/resolveTitle';
 
 export const LIBRARY_STATUS = {
@@ -178,44 +177,48 @@ export const LibraryProvider = ({ children }) => {
   const [entriesById, setEntriesById] = useState({});
   const [favoriteEntryIds, setFavoriteEntryIds] = useState(() => new Set());
 
-  const remoteEntries = useQuery(
-    api['functions/library'].list,
-    userId ? { userId } : undefined
-  );
-
-  const saveEntryMutation = useMutation(api['functions/library'].save);
-  const removeEntryMutation = useMutation(api['functions/library'].remove);
-  const updateStatusMutation = useMutation(api['functions/library'].updateStatus);
-  const updateProgressMutation = useMutation(api['functions/library'].updateProgress);
-  const updateRatingMutation = useMutation(api['functions/library'].updateRating);
-  const updateFavoritesMutation = useMutation(api['functions/library'].updateFavorites);
-
   useEffect(() => {
     if (!userId) {
       setEntriesById({});
       return;
     }
 
-    if (remoteEntries === undefined) {
-      return;
-    }
+    let isMounted = true;
 
-    if (!Array.isArray(remoteEntries)) {
-      setEntriesById({});
-      return;
-    }
+    localLibraryApi
+      .list({ userId })
+      .then((entries) => {
+        if (!isMounted) {
+          return;
+        }
 
-    const mapped = remoteEntries.reduce((acc, entry) => {
-      const normalized = fromBackendEntry(entry);
-      if (!normalized) {
-        return acc;
-      }
-      acc[normalized.mal_id] = normalized;
-      return acc;
-    }, {});
+        if (!Array.isArray(entries)) {
+          setEntriesById({});
+          return;
+        }
 
-    setEntriesById(mapped);
-  }, [remoteEntries, userId]);
+        const mapped = entries.reduce((acc, entry) => {
+          const normalized = fromBackendEntry(entry);
+          if (!normalized) {
+            return acc;
+          }
+          acc[normalized.mal_id] = normalized;
+          return acc;
+        }, {});
+
+        setEntriesById(mapped);
+      })
+      .catch((error) => {
+        console.error('Failed to load library entries', error);
+        if (isMounted) {
+          setEntriesById({});
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [userId]);
 
   useEffect(() => {
     if (!userId) {
@@ -263,18 +266,8 @@ export const LibraryProvider = ({ children }) => {
         .filter((value) => value != null);
 
       syncFavorites(sanitizedFavorites);
-
-      updateFavoritesMutation({ userId, favorites: sanitizedFavorites })
-        .then((savedFavorites) => {
-          if (Array.isArray(savedFavorites)) {
-            syncFavorites(savedFavorites);
-          }
-        })
-        .catch((error) => {
-          console.error('Failed to update favorites', error);
-        });
     },
-    [syncFavorites, updateFavoritesMutation, userId]
+    [syncFavorites, userId]
   );
 
   const upsertEntry = useCallback(
@@ -316,13 +309,13 @@ export const LibraryProvider = ({ children }) => {
       if (mergedEntry && userId) {
         const payload = toBackendEntryPayload(mergedEntry);
         if (payload) {
-          saveEntryMutation({ userId, entry: payload }).catch((error) => {
+          localLibraryApi.save({ userId, entry: payload }).catch((error) => {
             console.error('Failed to persist library entry', error);
           });
         }
       }
     },
-    [saveEntryMutation, userId]
+    [userId]
   );
 
   const removeEntry = useCallback(
@@ -356,7 +349,7 @@ export const LibraryProvider = ({ children }) => {
         });
 
         if (userId) {
-          removeEntryMutation({ userId, malId: normalizedMalId }).catch((error) => {
+          localLibraryApi.remove({ userId, malId: normalizedMalId }).catch((error) => {
             console.error('Failed to remove library entry', error);
           });
           if (nextFavoritesSet) {
@@ -365,7 +358,7 @@ export const LibraryProvider = ({ children }) => {
         }
       }
     },
-    [persistFavorites, removeEntryMutation, userId]
+    [persistFavorites, userId]
   );
 
   const updateEntryStatus = useCallback(
@@ -402,12 +395,12 @@ export const LibraryProvider = ({ children }) => {
       });
 
       if (didChange && userId) {
-        updateStatusMutation({ userId, malId, status }).catch((error) => {
+        localLibraryApi.updateStatus({ userId, malId, status }).catch((error) => {
           console.error('Failed to update library status', error);
         });
       }
     },
-    [removeEntry, updateStatusMutation, userId]
+    [removeEntry, userId]
   );
 
   const updateEntryProgress = useCallback(
@@ -452,17 +445,19 @@ export const LibraryProvider = ({ children }) => {
       });
 
       if (didUpdate && userId) {
-        updateProgressMutation({
-          userId,
-          malId,
-          value: sanitizedValue,
-          type,
-        }).catch((error) => {
-          console.error('Failed to update library progress', error);
-        });
+        localLibraryApi
+          .updateProgress({
+            userId,
+            malId,
+            value: sanitizedValue,
+            type,
+          })
+          .catch((error) => {
+            console.error('Failed to update library progress', error);
+          });
       }
     },
-    [updateProgressMutation, userId]
+    [userId]
   );
 
   const updateEntryRating = useCallback(
@@ -499,23 +494,30 @@ export const LibraryProvider = ({ children }) => {
       });
 
       if (didUpdate && userId) {
-        updateRatingMutation({
-          userId,
-          malId,
-          rating: sanitizedRating,
-        }).catch((error) => {
-          console.error('Failed to update library rating', error);
-        });
+        localLibraryApi
+          .updateRating({
+            userId,
+            malId,
+            rating: sanitizedRating,
+          })
+          .catch((error) => {
+            console.error('Failed to update library rating', error);
+          });
       }
     },
-    [updateRatingMutation, userId]
+    [userId]
   );
 
   const resetLibrary = useCallback(() => {
     setEntriesById({});
     setFavoriteEntryIds(() => new Set());
     syncFavorites([]);
-  }, [syncFavorites]);
+    if (userId) {
+      localLibraryApi.reset({ userId }).catch((error) => {
+        console.error('Failed to reset library cache', error);
+      });
+    }
+  }, [syncFavorites, userId]);
 
   const toggleFavoriteEntry = useCallback(
     (malId) => {
