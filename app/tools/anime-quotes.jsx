@@ -62,7 +62,7 @@ const QUOTES = [
 const styles = StyleSheet.create({
     screen: {
         flex: 1,
-        backgroundColor: "#1a1b26", // Lighter than original black
+        backgroundColor: theme.colors.backgroundAlt, // Match misc tab background
     },
     scrollContent: {
         flexGrow: 1,
@@ -217,7 +217,7 @@ export default function AnimeQuotesScreen() {
         <View style={styles.screen}>
             <Stack.Screen options={{
                 title: "Anime Quotes",
-                headerStyle: { backgroundColor: theme.colors.background },
+                headerStyle: { backgroundColor: theme.colors.backgroundAlt },
                 headerTintColor: theme.colors.text,
                 headerShadowVisible: false,
             }} />
