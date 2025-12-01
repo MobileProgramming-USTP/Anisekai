@@ -47,7 +47,10 @@ const tools = [
     title: 'Anime News Feed',
     description: 'The latest news and headlines from the anime world.',
     icon: <Ionicons name="newspaper-outline" size={32} color="#fcbf49" />,
-    action: () => console.log('Navigate to News Feed'),
+    action: () => {
+      console.log('Navigating to Anime News');
+      router.push('/tools/anime-news');
+    },
   },
 ];
 
