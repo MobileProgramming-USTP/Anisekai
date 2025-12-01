@@ -1,5 +1,4 @@
 ﻿import { FontAwesome } from "@expo/vector-icons";
-import { useMutation } from "convex/react";
 import { LinearGradient } from "expo-linear-gradient";
 import { Link, useRouter } from "expo-router";
 import { useState } from "react";
@@ -12,12 +11,11 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { api } from "../../convex/_generated/api";
+import { localAuthApi } from "../../src/services/localDataStore";
 import styles from "../../styles/registerStyles";
 
 const Register = () => {
   const router = useRouter();
-  const registerUser = useMutation(api["functions/auth"].register);
 
   const [form, setForm] = useState({
     username: "",
@@ -35,7 +33,7 @@ const Register = () => {
 
     try {
       setLoading(true);
-      await registerUser(form);
+      await localAuthApi.register(form);
       Alert.alert("Success", "Account created successfully!", [
         { text: "OK", onPress: () => router.push("/login/login") },
       ]);
