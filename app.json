@@ -49,11 +49,6 @@
     "experiments": {
       "typedRoutes": true
     },
-    "extra": {
-      "convexProdUrl": "https://benevolent-peccary-166.convex.cloud",
-      "convexDefaultEnv": "production",
-      "convexDevUrl": "http://192.168.1.11:3210"
-    },
     "updates": {
       "fallbackToCacheTimeout": 0
     },
