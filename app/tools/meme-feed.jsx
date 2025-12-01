@@ -1,6 +1,6 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { Stack } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
     ActivityIndicator,
     FlatList,
@@ -173,10 +173,28 @@ const styles = StyleSheet.create({
         backgroundColor: "rgba(255,255,255,0.1)",
         borderRadius: 20,
     },
+    scrollTopButton: {
+        position: "absolute",
+        bottom: 30,
+        right: 30,
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        backgroundColor: theme.colors.primary,
+        justifyContent: "center",
+        alignItems: "center",
+        elevation: 8,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4.65,
+        zIndex: 10,
+    },
 });
 
 export default function MemeFeedScreen() {
     const { width } = useWindowDimensions();
+    const flatListRef = useRef(null);
     const [memes, setMemes] = useState([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -185,6 +203,7 @@ export default function MemeFeedScreen() {
     const [after, setAfter] = useState(null);
     const [activeSubreddit, setActiveSubreddit] = useState(SUBREDDITS[0]);
     const [selectedMeme, setSelectedMeme] = useState(null);
+    const [showScrollTop, setShowScrollTop] = useState(false);
 
     const fetchMemes = useCallback(
         async (isRefresh = false, nextAfter = null) => {
@@ -247,6 +266,15 @@ export default function MemeFeedScreen() {
         if (!loadingMore && after) {
             fetchMemes(false, after);
         }
+    };
+
+    const handleScroll = (event) => {
+        const offsetY = event.nativeEvent.contentOffset.y;
+        setShowScrollTop(offsetY > 500);
+    };
+
+    const scrollToTop = () => {
+        flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
     };
 
     const renderItem = useCallback(
@@ -346,6 +374,7 @@ export default function MemeFeedScreen() {
             }} />
 
             <FlatList
+                ref={flatListRef}
                 data={memes}
                 renderItem={renderItem}
                 keyExtractor={(item) => item.id}
@@ -354,9 +383,17 @@ export default function MemeFeedScreen() {
                 onRefresh={handleRefresh}
                 onEndReached={handleLoadMore}
                 onEndReachedThreshold={0.5}
+                onScroll={handleScroll}
+                scrollEventThrottle={16}
                 ListHeaderComponent={renderHeader}
                 ListFooterComponent={renderFooter}
             />
+
+            {showScrollTop && (
+                <Pressable style={styles.scrollTopButton} onPress={scrollToTop}>
+                    <Ionicons name="arrow-up" size={28} color={theme.colors.primaryForeground} />
+                </Pressable>
+            )}
 
             <Modal
                 visible={!!selectedMeme}
