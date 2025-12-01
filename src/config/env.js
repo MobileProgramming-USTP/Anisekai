@@ -27,9 +27,6 @@ const readEnvValue = (key, { fallback = null, required = false } = {}) => {
 };
 
 export const env = {
-  convexDeployment: readEnvValue("CONVEX_DEPLOYMENT"),
-  convexUrl: readEnvValue("EXPO_PUBLIC_CONVEX_URL"),
-  convexEnv: readEnvValue("EXPO_PUBLIC_CONVEX_ENV"),
   jikanApiUrl: readEnvValue("EXPO_PUBLIC_JIKAN_API_URL", {
     fallback: "https://api.jikan.moe/v4",
   }),
