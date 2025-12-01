@@ -33,7 +33,7 @@ const tools = [
     title: 'Meme Feed',
     description: 'A curated feed of memes from Reddit\'s best anime subs.',
     icon: <Ionicons name="logo-reddit" size={32} color="#fcbf49" />,
-    action: () => console.log('Navigate to Meme Feed'),
+    action: () => router.push('/tools/meme-feed'),
   },
   {
     key: 'ai-recs',
