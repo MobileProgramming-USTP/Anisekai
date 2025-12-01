@@ -40,7 +40,10 @@ const tools = [
     title: 'AI Recommendations',
     description: 'Get personalized anime suggestions powered by AI.',
     icon: <Ionicons name="sparkles-outline" size={32} color="#fcbf49" />,
-    action: () => console.log('Navigate to AI Recs'),
+    action: () => {
+      console.log('Navigating to AI Recs');
+      router.push('/tools/ai-recs');
+    },
   },
   {
     key: 'news-feed',
