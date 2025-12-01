@@ -1,5 +1,4 @@
 import { FontAwesome } from "@expo/vector-icons";
-import { useMutation } from "convex/react";
 import { LinearGradient } from "expo-linear-gradient";
 import { Link, useRouter } from "expo-router";
 import { useState } from "react";
@@ -12,14 +11,13 @@ import {
   View
 } from "react-native";
 import WelcomeBanner from "../../components/WelcomeBanner";
-import { api } from "../../convex/_generated/api";
+import { localAuthApi } from "../../src/services/localDataStore";
 import styles from "../../styles/loginStyles";
 import { useAuth } from "../context/AuthContext";
 
 const Login = () => {
   const router = useRouter();
   const { signIn } = useAuth();
-  const loginUser = useMutation(api["functions/auth"].login);
 
   const [form, setForm] = useState({ identifier: "", password: "" });
   const [rememberMe, setRememberMe] = useState(false);
@@ -38,7 +36,7 @@ const Login = () => {
 
     try {
       setLoading(true);
-      const user = await loginUser({
+      const user = await localAuthApi.login({
         identifier: form.identifier.trim(),
         password: form.password,
       });
@@ -138,7 +136,7 @@ const Login = () => {
           </TouchableOpacity>
 
           <Text style={styles.footer}>
-            Don't have an account?{" "}
+            Don&apos;t have an account?{" "}
             <Link href="/login/register" style={styles.link}>
               Sign Up
             </Link>
