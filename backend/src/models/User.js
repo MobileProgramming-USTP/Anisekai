@@ -18,10 +18,18 @@ const userSchema = new mongoose.Schema({
         required: true,
         minlength: 6
     },
+    avatar: {
+        type: String,
+        default: ''
+    },
     profileImage: {
         type: String,
         default: ''
 
+    },
+    favorites: {
+        type: [Number],
+        default: []
     }
 })
 
