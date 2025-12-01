@@ -37,6 +37,9 @@ export const env = {
     fallback: "https://api.waifu.pics/sfw",
   }),
   geminiApiKey: readEnvValue("EXPO_PUBLIC_GEMINI_API_KEY"),
+  backendApiUrl: readEnvValue("EXPO_PUBLIC_API_BASE_URL", {
+    fallback: "http://localhost:3001/api",
+  }),
 };
 
 export default env;
