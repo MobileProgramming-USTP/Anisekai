@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   BackHandler,
@@ -11,7 +11,9 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import { useLocalSearchParams } from 'expo-router';
 import { useLibrary } from '../../context/LibraryContext';
+import { useFocusEffect } from 'expo-router';
 import styles from '../../../styles/exploreStyles';
 import ExploreDetailView from '../../../src/explore/components/ExploreDetailView';
 import MediaCard from '../../../src/explore/components/MediaCard';
@@ -41,6 +43,7 @@ const ExploreScreen = () => {
   const [selectedDetailScope, setSelectedDetailScope] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState(null);
+  const [pendingPrefill, setPendingPrefill] = useState(null);
 
   const [viewAllSection, setViewAllSection] = useState(null);
   const [genrePickerOpen, setGenrePickerOpen] = useState(false);
@@ -59,6 +62,9 @@ const ExploreScreen = () => {
   const requestIdRef = useRef(0);
   const detailAbortRef = useRef(null);
   const detailTimeoutRef = useRef(null);
+  const handledPrefillTokens = useRef(new Set());
+
+  const { prefillQuery, prefillScope, prefillToken } = useLocalSearchParams();
 
   const activeScopeLabel = useMemo(
     () => SCOPE_OPTIONS.find((option) => option.value === activeScope)?.label ?? 'Anime',
@@ -118,6 +124,101 @@ const ExploreScreen = () => {
     setGenrePickerOpen(false);
     closeScopeMenu();
   };
+
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        handleBackToBrowse();
+        setPendingPrefill(null);
+      };
+    }, [])
+  );
+
+  useEffect(() => {
+    const token =
+      typeof prefillToken === 'string'
+        ? prefillToken
+        : Array.isArray(prefillToken)
+        ? prefillToken[0]
+        : '';
+    const incomingTitleRaw =
+      typeof prefillQuery === 'string'
+        ? prefillQuery
+        : Array.isArray(prefillQuery)
+        ? prefillQuery[0]
+        : '';
+    const incomingTitle = incomingTitleRaw.trim();
+    if (!token || !incomingTitle) {
+      return;
+    }
+
+    if (handledPrefillTokens.current.has(token)) {
+      return;
+    }
+    if (handledPrefillTokens.current.size > 30) {
+      handledPrefillTokens.current.clear();
+    }
+    handledPrefillTokens.current.add(token);
+
+    if (detailAbortRef.current) {
+      detailAbortRef.current.abort();
+      detailAbortRef.current = null;
+    }
+    if (detailTimeoutRef.current) {
+      clearTimeout(detailTimeoutRef.current);
+      detailTimeoutRef.current = null;
+    }
+    setDetailLoading(false);
+    setDetailError(null);
+    setSelectedDetail(null);
+    setSelectedDetailScope(null);
+
+    const rawScope =
+      typeof prefillScope === 'string'
+        ? prefillScope
+        : Array.isArray(prefillScope)
+        ? prefillScope[0]
+        : '';
+    const targetScope =
+      rawScope?.toLowerCase() === SCOPE_VALUES.MANGA ? SCOPE_VALUES.MANGA : SCOPE_VALUES.ANIME;
+
+    setPendingPrefill({ title: incomingTitle, scope: targetScope });
+    if (activeScope !== targetScope) {
+      handleScopeChange(targetScope);
+    }
+    setSearchQuery(incomingTitle);
+  }, [prefillQuery, prefillScope, prefillToken, activeScope, setSearchQuery]);
+
+  useEffect(() => {
+    if (!pendingPrefill || !pendingPrefill.title) {
+      return;
+    }
+    if (selectedDetail || detailLoading) {
+      return;
+    }
+    if (activeScope !== pendingPrefill.scope) {
+      return;
+    }
+    if (!searchResults || searchResults.length === 0) {
+      return;
+    }
+
+    const normalizedTitle = pendingPrefill.title.toLowerCase();
+    const match =
+      searchResults.find((item) => (item?.title || '').toLowerCase() === normalizedTitle) ||
+      searchResults[0];
+
+    if (!match) {
+      return;
+    }
+
+    if (pendingPrefill.scope === SCOPE_VALUES.MANGA) {
+      handleSelectManga(match);
+    } else {
+      handleSelectAnime(match);
+    }
+    setPendingPrefill(null);
+  }, [pendingPrefill, searchResults, selectedDetail, detailLoading, activeScope]);
 
   const handleSelectAnime = async (item) => {
     if (!item?.mal_id) {
