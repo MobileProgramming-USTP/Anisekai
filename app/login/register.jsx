@@ -11,7 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { localAuthApi } from "../../src/services/localDataStore";
+import { authApi } from "../../backend/src/services/dataApi";
 import styles from "../../styles/registerStyles";
 
 const Register = () => {
@@ -33,12 +33,16 @@ const Register = () => {
 
     try {
       setLoading(true);
-      await localAuthApi.register(form);
+      await authApi.register(form);
       Alert.alert("Success", "Account created successfully!", [
         { text: "OK", onPress: () => router.push("/login/login") },
       ]);
     } catch (err) {
-      const message = err?.data?.details ?? err?.message ?? "Something went wrong.";
+      const message =
+        err?.response?.data?.message ??
+        err?.data?.details ??
+        err?.message ??
+        "Network error. Please check your connection and API base URL.";
       Alert.alert("Registration Failed", message);
     } finally {
       setLoading(false);

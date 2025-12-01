@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useMemo, useState } from "react";
-import { localAuthApi } from "../../src/services/localDataStore";
+import { authApi, setAuthToken, usingBackendApi } from "../../backend/src/services/dataApi";
 
 const normalizeFavorites = (favorites) => {
   if (!Array.isArray(favorites)) {
@@ -37,7 +37,8 @@ const normalizeUser = (candidate) => {
   }
 
   const normalizedFavorites = normalizeFavorites(candidate.favorites);
-  const normalizedAvatar = sanitizeAvatar(candidate.avatar);
+  const normalizedAvatar =
+    sanitizeAvatar(candidate.avatar) ?? sanitizeAvatar(candidate.profileImage);
   const id = candidate.id ?? candidate._id ?? null;
 
   return {
@@ -50,6 +51,8 @@ const normalizeUser = (candidate) => {
 
 const AuthContext = createContext({
   user: null,
+  token: null,
+  backendEnabled: false,
   signIn: () => undefined,
   signOut: () => undefined,
   updateProfile: async () => undefined,
@@ -58,14 +61,22 @@ const AuthContext = createContext({
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [token, setToken] = useState(null);
   const userId = user?.id ?? null;
 
-  const signIn = useCallback((nextUser) => {
-    setUser(normalizeUser(nextUser));
+  const signIn = useCallback((payload) => {
+    const normalizedUser = normalizeUser(payload?.user ?? payload);
+    const nextToken = payload?.token ?? null;
+    setUser(normalizedUser);
+    setToken(nextToken);
+    setAuthToken(nextToken);
+    return normalizedUser;
   }, []);
 
   const signOut = useCallback(() => {
     setUser(null);
+    setToken(null);
+    setAuthToken(null);
   }, []);
 
   const updateProfile = useCallback(
@@ -86,8 +97,8 @@ export const AuthProvider = ({ children }) => {
         payload.avatar = updates.avatar;
       }
 
-      const result = await localAuthApi.updateProfile(payload);
-      const normalized = normalizeUser(result);
+      const result = await authApi.updateProfile(payload);
+      const normalized = normalizeUser(result?.user ?? result);
       setUser(normalized);
       return normalized;
     },
@@ -119,7 +130,7 @@ export const AuthProvider = ({ children }) => {
       });
 
       if (userId) {
-        localAuthApi
+        authApi
           .updateFavorites({ userId, favorites: normalizedFavorites })
           .catch((error) => {
             console.error("Failed to persist favorites", error);
@@ -132,12 +143,14 @@ export const AuthProvider = ({ children }) => {
   const value = useMemo(
     () => ({
       user,
+      token,
+      backendEnabled: usingBackendApi,
       signIn,
       signOut,
       updateProfile,
       syncFavorites,
     }),
-    [user, signIn, signOut, updateProfile, syncFavorites]
+    [user, token, signIn, signOut, updateProfile, syncFavorites]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

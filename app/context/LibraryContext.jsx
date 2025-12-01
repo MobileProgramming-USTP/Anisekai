@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useAuth } from './AuthContext';
-import { localLibraryApi } from '../../src/services/localDataStore';
+import { libraryApi } from '../../backend/src/services/dataApi';
 import { resolvePreferredTitle } from '../../src/utils/resolveTitle';
 
 export const LIBRARY_STATUS = {
@@ -185,7 +185,7 @@ export const LibraryProvider = ({ children }) => {
 
     let isMounted = true;
 
-    localLibraryApi
+    libraryApi
       .list({ userId })
       .then((entries) => {
         if (!isMounted) {
@@ -309,7 +309,7 @@ export const LibraryProvider = ({ children }) => {
       if (mergedEntry && userId) {
         const payload = toBackendEntryPayload(mergedEntry);
         if (payload) {
-          localLibraryApi.save({ userId, entry: payload }).catch((error) => {
+          libraryApi.save({ userId, entry: payload }).catch((error) => {
             console.error('Failed to persist library entry', error);
           });
         }
@@ -349,7 +349,7 @@ export const LibraryProvider = ({ children }) => {
         });
 
         if (userId) {
-          localLibraryApi.remove({ userId, malId: normalizedMalId }).catch((error) => {
+          libraryApi.remove({ userId, malId: normalizedMalId }).catch((error) => {
             console.error('Failed to remove library entry', error);
           });
           if (nextFavoritesSet) {
@@ -395,7 +395,7 @@ export const LibraryProvider = ({ children }) => {
       });
 
       if (didChange && userId) {
-        localLibraryApi.updateStatus({ userId, malId, status }).catch((error) => {
+        libraryApi.updateStatus({ userId, malId, status }).catch((error) => {
           console.error('Failed to update library status', error);
         });
       }
@@ -445,7 +445,7 @@ export const LibraryProvider = ({ children }) => {
       });
 
       if (didUpdate && userId) {
-        localLibraryApi
+        libraryApi
           .updateProgress({
             userId,
             malId,
@@ -494,7 +494,7 @@ export const LibraryProvider = ({ children }) => {
       });
 
       if (didUpdate && userId) {
-        localLibraryApi
+        libraryApi
           .updateRating({
             userId,
             malId,
@@ -513,7 +513,7 @@ export const LibraryProvider = ({ children }) => {
     setFavoriteEntryIds(() => new Set());
     syncFavorites([]);
     if (userId) {
-      localLibraryApi.reset({ userId }).catch((error) => {
+      libraryApi.reset({ userId }).catch((error) => {
         console.error('Failed to reset library cache', error);
       });
     }

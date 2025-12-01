@@ -11,7 +11,7 @@ import {
   View
 } from "react-native";
 import WelcomeBanner from "../../components/WelcomeBanner";
-import { localAuthApi } from "../../src/services/localDataStore";
+import { authApi } from "../../backend/src/services/dataApi";
 import styles from "../../styles/loginStyles";
 import { useAuth } from "../context/AuthContext";
 
@@ -36,19 +36,23 @@ const Login = () => {
 
     try {
       setLoading(true);
-      const user = await localAuthApi.login({
+      const response = await authApi.login({
         identifier: form.identifier.trim(),
         password: form.password,
       });
-      signIn(user);
+      const signedInUser = signIn(response);
 
-      setLoggedUser(user.username);
+      setLoggedUser(signedInUser?.username ?? form.identifier.trim());
       setShowWelcome(true);
 
       // redirect after banner fades out
       setTimeout(() => router.replace("/(tabs)/home"), 1800);
     } catch (err) {
-      const message = err?.data?.details ?? err?.message ?? "Invalid credentials.";
+      const message =
+        err?.response?.data?.message ??
+        err?.data?.details ??
+        err?.message ??
+        "Network error. Please check your connection and API base URL.";
       alert("Login Failed: " + message);
     } finally {
       setLoading(false);
