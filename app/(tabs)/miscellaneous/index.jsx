@@ -1,7 +1,7 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { router } from 'expo-router';
 import { Dimensions, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 
 const tools = [
   {
@@ -16,7 +16,10 @@ const tools = [
     title: 'Anime Quotes',
     description: 'Find iconic quotes from your favorite characters.',
     icon: <Ionicons name="chatbubble-ellipses-outline" size={32} color="#fcbf49" />,
-    action: () => console.log('Navigate to Anime Quotes'),
+    action: () => {
+      console.log('Navigating to Anime Quotes');
+      router.push('/tools/anime-quotes');
+    },
   },
   {
     key: 'anime-trace',
