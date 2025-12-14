@@ -38,7 +38,8 @@ export const env = {
   }),
   geminiApiKey: readEnvValue("EXPO_PUBLIC_GEMINI_API_KEY"),
   backendApiUrl: readEnvValue("EXPO_PUBLIC_API_BASE_URL", {
-    fallback: "http://localhost:3001/api",
+    // Default to the deployed backend so release builds don’t silently hit localhost
+    fallback: "https://anisekai.onrender.com/api",
   }),
 };
 

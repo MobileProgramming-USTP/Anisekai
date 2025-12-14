@@ -304,7 +304,7 @@ const Home = () => {
           multiline
           autoCorrect
           autoCapitalize="sentences"
-          editable={isGeminiConfigured && !aiLoading}
+          editable={!aiLoading}
           onSubmitEditing={() => handleGenerateRecommendations()}
           blurOnSubmit
           returnKeyType="search"
