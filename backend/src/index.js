@@ -18,6 +18,11 @@ app.get("/", (_req, res) => {
   res.json({ status: "ok", message: "Anisekai API", docs: "/api" });
 });
 
+// Basic API root responder to show API is alive
+app.get("/api", (_req, res) => {
+  res.json({ status: "ok", message: "Anisekai API", routes: ["/api/auth", "/api/library"] });
+});
+
 app.use("/api/auth", authRoutes);
 app.use("/api/library", libraryRoutes);
 
