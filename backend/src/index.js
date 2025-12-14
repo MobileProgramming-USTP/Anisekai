@@ -13,6 +13,11 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Simple root responder so hitting "/" doesn't return 404 (useful for uptime checks)
+app.get("/", (_req, res) => {
+  res.json({ status: "ok", message: "Anisekai API", docs: "/api" });
+});
+
 app.use("/api/auth", authRoutes);
 app.use("/api/library", libraryRoutes);
 
