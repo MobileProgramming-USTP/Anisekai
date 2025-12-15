@@ -89,7 +89,6 @@ android {
 
     namespace 'com.anisekai.app'
     defaultConfig {
-        // Keep in sync with expo.android.package in app.json
         applicationId 'com.anisekai.app'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
