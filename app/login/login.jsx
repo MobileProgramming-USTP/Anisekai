@@ -10,8 +10,8 @@ import {
   TouchableOpacity,
   View
 } from "react-native";
-import WelcomeBanner from "../../components/WelcomeBanner";
 import { authApi } from "../../backend/src/services/dataApi";
+import WelcomeBanner from "../../components/WelcomeBanner";
 import styles from "../../styles/loginStyles";
 import { useAuth } from "../context/AuthContext";
 
@@ -19,6 +19,7 @@ const Login = () => {
   const router = useRouter();
   const { signIn } = useAuth();
 
+  // State Initialization
   const [form, setForm] = useState({ identifier: "", password: "" });
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -36,16 +37,18 @@ const Login = () => {
 
     try {
       setLoading(true);
+      // 1. Call API to verify credentials
       const response = await authApi.login({
         identifier: form.identifier.trim(),
         password: form.password,
       });
+      // 2. Update Global Auth State (User & Token)
       const signedInUser = signIn(response);
 
       setLoggedUser(signedInUser?.username ?? form.identifier.trim());
       setShowWelcome(true);
 
-      // redirect after banner fades out
+      // 3. Redirect to Home Screen after success
       setTimeout(() => router.replace("/(tabs)/home"), 1800);
     } catch (err) {
       const message =
@@ -96,6 +99,7 @@ const Login = () => {
             />
             <TouchableOpacity
               style={styles.toggleButton}
+              // Toggle Password Visibility
               onPress={() => setShowPassword((prev) => !prev)}
               activeOpacity={0.7}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
@@ -112,6 +116,7 @@ const Login = () => {
           <View style={styles.optionsRow}>
             <TouchableOpacity
               style={styles.rememberMeContainer}
+              // Toggle Remember Me Checkbox
               onPress={() => setRememberMe((prev) => !prev)}
               activeOpacity={0.7}
               accessibilityRole="checkbox"
