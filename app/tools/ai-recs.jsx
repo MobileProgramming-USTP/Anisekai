@@ -20,7 +20,7 @@ import { theme } from "../../styles/theme";
 const styles = StyleSheet.create({
     screen: {
         flex: 1,
-        backgroundColor: "#1a1b26",
+        backgroundColor: theme.colors.backgroundAlt,
     },
     headerContainer: {
         marginBottom: 20,

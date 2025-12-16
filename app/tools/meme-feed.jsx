@@ -21,7 +21,7 @@ const SUBREDDITS = ["animemes", "goodanimemes", "wholesomeanimemes"];
 const styles = StyleSheet.create({
     screen: {
         flex: 1,
-        backgroundColor: "#1a1b26", // Lighter than original black
+        backgroundColor: theme.colors.backgroundAlt, // Match misc tab background
     },
     listContent: {
         padding: 16,

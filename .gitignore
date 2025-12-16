@@ -33,8 +33,12 @@ yarn-error.*
 # local env files
 backend/.env
 .env*.local
+.env.production
 
 # typescript
 *.tsbuildinfo
 
 app-example
+
+# local gradle cache
+gradle17/

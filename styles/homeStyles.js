@@ -216,13 +216,61 @@ const homeStyles = StyleSheet.create({
   recommendationList: {
     marginTop: theme.spacing.medium,
   },
+  recommendationCarousel: {
+    paddingRight: theme.spacing.medium,
+    paddingTop: theme.spacing.small,
+  },
   recommendationCard: {
     backgroundColor: "rgba(18, 26, 33, 0.85)",
     borderRadius: theme.radius.large,
     padding: theme.spacing.medium,
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.05)",
-    marginBottom: theme.spacing.medium,
+    marginRight: theme.spacing.medium,
+    width: 240,
+  },
+  recommendationCardPressed: {
+    transform: [{ scale: 0.98 }],
+    opacity: 0.94,
+  },
+  recommendationCoverWrapper: {
+    borderRadius: theme.radius.medium,
+    overflow: "hidden",
+    marginBottom: theme.spacing.small,
+    position: "relative",
+    backgroundColor: "rgba(255, 255, 255, 0.04)",
+  },
+  recommendationCover: {
+    width: "100%",
+    height: 180,
+  },
+  recommendationCoverFallback: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  recommendationCoverInitial: {
+    color: "#FFB300",
+    fontSize: theme.typography.sizes.xxlarge,
+    fontWeight: theme.typography.weights.black,
+    letterSpacing: 1,
+  },
+  recommendationTypeBadge: {
+    position: "absolute",
+    top: theme.spacing.small,
+    left: theme.spacing.small,
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    paddingHorizontal: theme.spacing.small,
+    paddingVertical: theme.spacing.xsmall,
+    borderRadius: theme.radius.pill,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.18)",
+  },
+  recommendationTypeText: {
+    color: "#FFFFFF",
+    fontSize: theme.typography.sizes.xsmall,
+    fontWeight: theme.typography.weights.bold,
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
   },
   recommendationTitle: {
     color: "#E7EDF5",

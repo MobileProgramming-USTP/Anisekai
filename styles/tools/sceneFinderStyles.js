@@ -11,7 +11,9 @@ export const sceneFinderStyles = StyleSheet.create({
     backgroundColor: theme.colors.backgroundAlt,
   },
   header: {
-    padding: theme.spacing.large,
+    paddingHorizontal: theme.spacing.large,
+    paddingBottom: theme.spacing.large,
+    paddingTop: theme.spacing.xxlarge,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.borderMuted,
     backgroundColor: theme.colors.backgroundAlt,

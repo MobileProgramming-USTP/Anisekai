@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   Image,
   ImageBackground,
+  Pressable,
   ScrollView,
   Text,
   TextInput,
@@ -149,9 +150,30 @@ const Home = () => {
           signal: controller.signal,
         });
 
-        setAiRecommendations(recommendations);
+        const recsWithImages = await Promise.all(
+          recommendations.map(async (rec) => {
+            try {
+              await new Promise((resolve) => setTimeout(resolve, Math.random() * 750));
+              const response = await fetch(
+                `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(rec.title)}&limit=1`
+              );
+              const json = await response.json();
+              const cover = json.data?.[0]?.images?.jpg?.large_image_url || null;
+              return { ...rec, cover };
+            } catch (e) {
+              console.warn(`Failed to fetch cover for ${rec.title}`, e);
+              return rec;
+            }
+          })
+        );
 
-        if (!recommendations.length) {
+        if (aiAbortControllerRef.current && aiAbortControllerRef.current !== controller) {
+          return;
+        }
+
+        setAiRecommendations(recsWithImages);
+
+        if (!recsWithImages.length) {
           setAiError("Gemini could not find matches. Try a different vibe or genre.");
         }
       } catch (error) {
@@ -195,6 +217,25 @@ const Home = () => {
   const trimmedAiPreference = aiPreference.trim();
   const hasAiPreference = trimmedAiPreference.length > 0;
   const aiButtonDisabled = !isGeminiConfigured || aiLoading || !hasAiPreference;
+
+  const handleOpenRecommendation = useCallback(
+    (item) => {
+      if (!item?.title) {
+        return;
+      }
+      const scope = item?.type?.toLowerCase() === "manga" ? "manga" : "anime";
+      const token = Date.now().toString();
+      router.push({
+        pathname: "/(tabs)/explore",
+        params: {
+          prefillQuery: item.title,
+          prefillScope: scope,
+          prefillToken: token,
+        },
+      });
+    },
+    [router]
+  );
 
   return (
     <ScrollView
@@ -263,7 +304,7 @@ const Home = () => {
           multiline
           autoCorrect
           autoCapitalize="sentences"
-          editable={isGeminiConfigured && !aiLoading}
+          editable={!aiLoading}
           onSubmitEditing={() => handleGenerateRecommendations()}
           blurOnSubmit
           returnKeyType="search"
@@ -300,7 +341,11 @@ const Home = () => {
         ) : null}
         {aiError ? <Text style={styles.aiErrorText}>{aiError}</Text> : null}
         {aiRecommendations.length ? (
-          <View style={styles.recommendationList}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.recommendationCarousel}
+          >
             {aiRecommendations.map((item) => {
               const metaParts = [
                 item.type,
@@ -308,18 +353,48 @@ const Home = () => {
               ].filter(Boolean);
 
               return (
-                <View key={item.id} style={styles.recommendationCard}>
-                  <Text style={styles.recommendationTitle}>{item.title}</Text>
+                <Pressable
+                  key={item.id}
+                  onPress={() => handleOpenRecommendation(item)}
+                  style={({ pressed }) => [styles.recommendationCard, pressed && styles.recommendationCardPressed]}
+                >
+                  <View style={styles.recommendationCoverWrapper}>
+                    {item.cover ? (
+                      <Image
+                        source={{ uri: item.cover }}
+                        style={styles.recommendationCover}
+                        resizeMode="cover"
+                      />
+                    ) : (
+                      <View style={[styles.recommendationCover, styles.recommendationCoverFallback]}>
+                        <Text style={styles.recommendationCoverInitial}>
+                          {(item.title || "?").charAt(0).toUpperCase()}
+                        </Text>
+                      </View>
+                    )}
+                    {item.type ? (
+                      <View style={styles.recommendationTypeBadge}>
+                        <Text style={styles.recommendationTypeText}>{item.type}</Text>
+                      </View>
+                    ) : null}
+                  </View>
+                  <Text style={styles.recommendationTitle} numberOfLines={2}>
+                    {item.title}
+                  </Text>
                   {metaParts.length ? (
-                    <Text style={styles.recommendationMeta}>{metaParts.join(" | ")}</Text>
+                    <Text style={styles.recommendationMeta} numberOfLines={1}>
+                      {metaParts.join(" | ")}
+                    </Text>
                   ) : null}
                   {item.synopsis ? (
-                    <Text style={styles.recommendationSynopsis}>{item.synopsis}</Text>
+                    <Text style={styles.recommendationSynopsis} numberOfLines={3}>
+                      {item.synopsis}
+                    </Text>
                   ) : null}
-                </View>
+                </Pressable>
               );
             })}
-          </View>
+          </ScrollView>
         ) : null}
       </View>
 

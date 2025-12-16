@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: mobile-prog-backend
+    env: node
+    branch: main
+    rootDirectory: backend
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /
+    autoDeploy: true
+    envVars:
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
